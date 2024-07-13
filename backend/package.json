@@ -1,0 +1,36 @@
+{
+	"name": "sca-backend",
+	"version": "1.2.0",
+	"main": "./src/server.js",
+	"license": "MIT",
+	"scripts": {
+		"dev": "./run.sh",
+		"start": "node ./swagger/swagger.js && node ./src/server.js"
+	},
+	"prettier": {
+		"tabWidth": 4,
+		"useTabs": true,
+		"semi": true,
+		"singleQuote": true,
+		"arrowParens": "always",
+		"requirePragma": false,
+		"trailingComma": "none",
+		"printWidth": 120
+	},
+	"dependencies": {
+		"bcrypt": "^5.1.1",
+		"cors": "^2.8.5",
+		"dotenv": "^16.4.5",
+		"express": "^4.18.2",
+		"jsonwebtoken": "^9.0.1",
+		"mysql2": "^3.3.2",
+		"nodemon": "^3.0.1",
+		"sequelize": "^6.31.1",
+		"speakeasy": "^2.0.0",
+		"swagger-autogen": "^2.23.1",
+		"swagger-ui-express": "^4.1.4"
+	},
+	"author": "José Antonio de Andrade",
+	"description": "Sistema de controle de acesso",
+	"type": "module"
+}
