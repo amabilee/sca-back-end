@@ -3,12 +3,15 @@ import Usuario from '../models/Usuario.js';
 const usuarioSeed = async () => {
 	const existingUser = await Usuario.findOne();
 
-	if (existingUser) {
+	if (!existingUser) {
 		await Usuario.create({
+			nome: "Usuario 1",
+			cpf: "000.000.000-00",
 			usuario: 123,
 			senha: '123',
 			nivel_acesso: 2,
-			flag: 1
+			modulos: "Relatórios, Relatórios-Efetivo, Relatórios-Veículo, Pessoas, Pessoas-Efetivo, Pessoas-Usuário, Postos, Unidades, Veículos, Alertas, Crachás, Gerencia",
+			ativo_usuario: true
 		});
 
 		console.log('Usuário criado com sucesso!');
