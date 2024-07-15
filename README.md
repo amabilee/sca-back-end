@@ -2,7 +2,7 @@
 
 **Clone the repository**:
 
-`$ git clone https://github.com/j-andrade0/sca-backend.git`
+`$ git clone https://github.com/amabilee/sca-back-end.git`
 
 ## SCA - Backend
 > The objective of this project is to create an authentication system for the Anápolis Air Base.
@@ -38,6 +38,3 @@ npm run start
 > Now with the server running, open the browser and go to http://localhost:3000/doc/. 
 > There you can find all the endpoints, the params, and all you need to know about the api.
 
-
-## Authors
-José Antonio de Andrade - andradejoseantonio0@gmail.com - https://github.com/j-andrade0
