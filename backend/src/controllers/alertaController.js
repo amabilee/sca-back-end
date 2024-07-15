@@ -1,27 +1,55 @@
 import Entity from '../models/Alerta.js';
+import { Op } from 'sequelize';
+import { parse, formatISO, isWithinInterval } from 'date-fns';
 
 class AlertaController {
 	static getAllEntities = async (req, res) => {
-		const { page = 1 } = req.query;
+		const { page = 1, categoria, data } = req.query;
 		const limit = 10;
 		let lastPage = 1;
-		const countEntity = await Entity.count();
 
 		try {
-			const entities = await Entity.findAll({
+			let whereCondition = {};
+
+			if (categoria) {
+				whereCondition.categoria = { [Op.like]: `%${categoria}%` };
+			}
+
+			if (data) {
+				const [startDateString, endDateString] = data.split(',').map(decodeURIComponent);
+
+				const startDate = new Date(startDateString);
+				const endDate = new Date(endDateString);
+
+				if (isNaN(startDate) || isNaN(endDate)) {
+					throw new Error('Invalid date format');
+				}
+
+				whereCondition.data = {
+					[Op.between]: [startDate.toISOString(), endDate.toISOString()]
+				};
+			}
+
+			whereCondition.ativo_alerta = { [Op.like]: true };
+
+			const { count, rows: entities } = await Entity.findAndCountAll({
+				where: whereCondition,
 				order: [['id', 'ASC']],
 				offset: Number(page * limit - limit),
 				limit: limit
 			});
+
+			const totalPages = Math.ceil(count / limit);
 
 			const pagination = {
 				path: '/alertas',
 				page,
 				prev_page: page - 1 >= 1 ? page - 1 : false,
 				next_page: Number(page) + Number(1) > lastPage ? false : Number(page) + Number(1),
-				lastPage,
-				totalRegisters: countEntity
+				totalPages,
+				totalItems: count,
 			};
+
 			res.status(200).json({ entities, pagination });
 		} catch (error) {
 			res.status(500).send({ message: `${error.message}` });
@@ -46,11 +74,11 @@ class AlertaController {
 
 	static createEntity = async (req, res) => {
 		try {
-			const { nome_alerta, cor, ativo_alerta, sinc } = req.body;
+			const { categoria, mensagem, ativo_alerta, sinc } = req.body;
 
 			const createdEntity = await Entity.create({
-				nome_alerta,
-				cor,
+				categoria,
+				mensagem,
 				ativo_alerta,
 				sinc
 			});
@@ -66,13 +94,13 @@ class AlertaController {
 
 	static updateEntity = async (req, res) => {
 		try {
-			const { nome_alerta, cor, ativo_alerta, sinc } = req.body;
+			const { categoria, mensagem, ativo_alerta, sinc } = req.body;
 			const entityId = req.params.id;
 
 			const [updatedRows] = await Entity.update(
 				{
-					nome_alerta,
-					cor,
+					categoria,
+					mensagem,
 					ativo_alerta,
 					sinc
 				},

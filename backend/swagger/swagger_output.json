@@ -40,6 +40,26 @@
             "name": "page",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "nome",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "cpf",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "nivel_acesso",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "modulos",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {

@@ -10,12 +10,12 @@ const Alerta = db.define(
 			autoIncrement: true,
 			primaryKey: true
 		},
-		nome_alerta: {
+		categoria: {
 			type: DataTypes.STRING(30),
 			allowNull: false
 		},
-		cor: {
-			type: DataTypes.STRING(15),
+		mensagem: {
+			type: DataTypes.STRING(64),
 			allowNull: false
 		},
 		data: {

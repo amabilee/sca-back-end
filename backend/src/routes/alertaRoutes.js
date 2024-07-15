@@ -5,23 +5,23 @@ import authorizationMiddleware from '../middlewares/authorizationMiddleware.js'
 
 const router = express.Router();
 
-router.get('/alerta', authenticationMiddleware, authorizationMiddleware({nivel_acesso: 2}), AlertaController.getAllEntities, () => {
+router.get('/alerta', AlertaController.getAllEntities, () => {
   /* #swagger.tags = ['Alerta'] */
 });
 
-router.get('/alerta/:id', authenticationMiddleware, authorizationMiddleware({nivel_acesso: 2}), AlertaController.getEntityById, () => {
+router.get('/alerta/:id', AlertaController.getEntityById, () => {
   /* #swagger.tags = ['Alerta'] */
 });
 
-router.post('/alerta', authenticationMiddleware, authorizationMiddleware({nivel_acesso: 2}), AlertaController.createEntity, () => {
+router.post('/alerta', AlertaController.createEntity, () => {
   /* #swagger.tags = ['Alerta'] */
 });
 
-router.put('/alerta/:id', authenticationMiddleware, authorizationMiddleware({nivel_acesso: 2}), AlertaController.updateEntity, () => {
+router.put('/alerta/:id', AlertaController.updateEntity, () => {
   /* #swagger.tags = ['Alerta'] */
 });
 
-router.delete('/alerta/:id', authenticationMiddleware, authorizationMiddleware({nivel_acesso: 2}), AlertaController.deleteEntity, () => {
+router.delete('/alerta/:id', AlertaController.deleteEntity, () => {
   /* #swagger.tags = ['Alerta'] */
 });
 

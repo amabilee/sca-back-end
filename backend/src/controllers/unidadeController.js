@@ -1,4 +1,5 @@
-import { where, Op, Sequelize } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
+import Alerta from '../models/Alerta.js';
 import Entity from '../models/Unidade.js';
 import Efetivos from '../models/Efetivo.js'
 import Veiculos from '../models/Veiculo.js'
@@ -20,7 +21,7 @@ class UnidadeController {
 				whereCondition.nome = { [Op.like]: `%${nome}%` }
 			}
 			if (nivel_acesso) {
-				whereCondition.nivel_acesso = { [Op.like]: `%${nivel_acesso}%`}
+				whereCondition.nivel_acesso = { [Op.like]: `%${nivel_acesso}%` }
 			}
 
 			whereCondition.ativo_unidade = { [Op.eq]: true }
@@ -59,8 +60,6 @@ class UnidadeController {
 				distinct: true,
 				raw: true
 			});
-
-			// Count the total number of rows returned in the count array
 			const totalCount = count.length;
 
 			const totalPages = Math.ceil(totalCount / limit);
@@ -80,21 +79,6 @@ class UnidadeController {
 		}
 	};
 
-	static getEntityById = async (req, res) => {
-		try {
-			const entity = await Entity.findByPk(req.params.id);
-			if (entity) {
-				return res.status(200).json(entity);
-			} else {
-				return res.status(400).send({
-					message: `Id ${req.params.id} not found!`
-				});
-			}
-		} catch (error) {
-			return res.status(500).send({ message: `${error}` });
-		}
-	};
-
 	static createEntity = async (req, res) => {
 		try {
 			const { nome, ativo_unidade, maximo_efetivo, maximo_veiculo, nivel_acesso, sinc } = req.body;
@@ -107,8 +91,20 @@ class UnidadeController {
 				nivel_acesso,
 				sinc
 			});
+
+			await Alerta.create({
+				categoria: "Sucesso",
+				mensagem: "Unidade criada com sucesso",
+				ativo_alerta: true
+			});
+
 			res.status(201).json(createdEntity);
 		} catch (error) {
+			await Alerta.create({
+				categoria: "Erro",
+				mensagem: "Erro ao criar uma unidade",
+				ativo_alerta: true
+			});
 			if (error.name == 'SequelizeUniqueConstraintError') {
 				res.status(400).send({ message: 'Valores já cadastrados!' });
 			} else {
@@ -120,7 +116,7 @@ class UnidadeController {
 	static updateEntity = async (req, res) => {
 		try {
 			const { id } = req.params;
-			const { nome, ativo_unidade, maximo_efetivo, maximo_veiculo, nivel_acesso, sinc} = req.body;
+			const { nome, ativo_unidade, maximo_efetivo, maximo_veiculo, nivel_acesso, sinc } = req.body;
 
 			const [updatedRows] = await Entity.update(
 				{
@@ -135,6 +131,19 @@ class UnidadeController {
 			);
 
 			if (updatedRows > 0) {
+				if (ativo_unidade == false) {
+					await Alerta.create({
+						categoria: "Sucesso",
+						mensagem: "Unidade deletada com sucesso",
+						ativo_alerta: true
+					});
+				} else {
+					await Alerta.create({
+						categoria: "Sucesso",
+						mensagem: "Unidade alterada com sucesso",
+						ativo_alerta: true
+					});
+				}
 				res.status(200).send({ message: 'Entity updated successfully' });
 			} else {
 				res.status(400).send({
@@ -142,7 +151,36 @@ class UnidadeController {
 				});
 			}
 		} catch (error) {
+			const { ativo_unidade } = req.body;
+			if (ativo_unidade == false) {
+				await Alerta.create({
+					categoria: "Erro",
+					mensagem: "Erro ao deletar uma unidade",
+					ativo_alerta: true
+				});
+			} else {
+				await Alerta.create({
+					categoria: "Erro",
+					mensagem: "Erro ao editar uma unidade",
+					ativo_alerta: true
+				});
+			}
 			res.status(500).send({ message: `${error.message}` });
+		}
+	};
+
+	static getEntityById = async (req, res) => {
+		try {
+			const entity = await Entity.findByPk(req.params.id);
+			if (entity) {
+				return res.status(200).json(entity);
+			} else {
+				return res.status(400).send({
+					message: `Id ${req.params.id} not found!`
+				});
+			}
+		} catch (error) {
+			return res.status(500).send({ message: `${error}` });
 		}
 	};
 

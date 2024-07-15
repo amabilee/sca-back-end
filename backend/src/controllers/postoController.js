@@ -1,5 +1,6 @@
 import { where, Op } from 'sequelize';
 import Entity from '../models/Posto.js';
+import Alerta from '../models/Alerta.js';
 
 class PostoController {
 	static getAllEntities = async (req, res) => {
@@ -9,16 +10,16 @@ class PostoController {
 
 		try {
 			let whereCondition = {};
-			if (nome){
-				whereCondition.nome = { [Op.like]: `%${nome}%`}
+			if (nome) {
+				whereCondition.nome = { [Op.like]: `%${nome}%` }
 			}
-			if (nivel_acesso){
-				whereCondition.nivel_acesso = { [Op.like]: `%${nivel_acesso}%`}
+			if (nivel_acesso) {
+				whereCondition.nivel_acesso = { [Op.like]: `%${nivel_acesso}%` }
 			}
 
-			whereCondition.ativo_posto = {[Op.like]: true}
+			whereCondition.ativo_posto = { [Op.like]: true }
 
-			const {count, rows: entities } = await Entity.findAndCountAll({
+			const { count, rows: entities } = await Entity.findAndCountAll({
 				where: whereCondition,
 				order: [['id', 'ASC']],
 				offset: Number(page * limit - limit),
@@ -33,28 +34,12 @@ class PostoController {
 				prev_page: page - 1 >= 1 ? page - 1 : false,
 				next_page: Number(page) + Number(1) > lastPage ? false : Number(page) + Number(1),
 				totalPages,
-                totalItems: count,
+				totalItems: count,
 			};
 
 			res.status(200).json({ entities, pagination });
 		} catch (error) {
 			res.status(500).send({ message: `${error.message}` });
-		}
-	};
-
-
-	static getEntityById = async (req, res) => {
-		try {
-			const entity = await Entity.findByPk(req.params.id);
-			if (entity) {
-				return res.status(200).json(entity);
-			} else {
-				return res.status(400).send({
-					message: `Id ${req.params.id} not found!`
-				});
-			}
-		} catch (error) {
-			return res.status(500).send({ message: `${error.message}` });
 		}
 	};
 
@@ -68,8 +53,18 @@ class PostoController {
 				ativo_posto,
 				sinc_posto
 			});
+			await Alerta.create({
+				categoria: "Sucesso",
+				mensagem: "Posto de serviço criado com sucesso",
+				ativo_alerta: true
+			});
 			res.status(201).json(createdEntity);
 		} catch (error) {
+			await Alerta.create({
+				categoria: "Erro",
+				mensagem: "Erro ao criar um posto de serviço",
+				ativo_alerta: true
+			});
 			if (error.name == 'SequelizeUniqueConstraintError') {
 				res.status(400).send({ message: 'Valores já cadastrados!' });
 			} else {
@@ -94,6 +89,19 @@ class PostoController {
 			);
 
 			if (updatedRows > 0) {
+				if (ativo_posto == false) {
+					await Alerta.create({
+						categoria: "Sucesso",
+						mensagem: "Posto de serviço deletado com sucesso",
+						ativo_alerta: true
+					});
+				} else {
+					await Alerta.create({
+						categoria: "Sucesso",
+						mensagem: "Posto de serviço alterado com sucesso",
+						ativo_alerta: true
+					});
+				}
 				res.status(200).send({ message: 'Entity updated successfully' });
 			} else {
 				res.status(400).send({
@@ -101,7 +109,36 @@ class PostoController {
 				});
 			}
 		} catch (error) {
+			const { ativo_posto } = req.body;
+			if (ativo_posto == false) {
+				await Alerta.create({
+					categoria: "Erro",
+					mensagem: "Erro ao deletar um posto de serviço",
+					ativo_alerta: true
+				});
+			} else {
+				await Alerta.create({
+					categoria: "Erro",
+					mensagem: "Erro ao editar um posto de serviço",
+					ativo_alerta: true
+				});
+			}
 			res.status(500).send({ message: `${error.message}` });
+		}
+	};
+
+	static getEntityById = async (req, res) => {
+		try {
+			const entity = await Entity.findByPk(req.params.id);
+			if (entity) {
+				return res.status(200).json(entity);
+			} else {
+				return res.status(400).send({
+					message: `Id ${req.params.id} not found!`
+				});
+			}
+		} catch (error) {
+			return res.status(500).send({ message: `${error.message}` });
 		}
 	};
 

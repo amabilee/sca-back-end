@@ -10,7 +10,7 @@ const usuarioSeed = async () => {
 			usuario: 123,
 			senha: '123',
 			nivel_acesso: 2,
-			modulos: "Relatórios, Relatórios-Efetivo, Relatórios-Veículo, Pessoas, Pessoas-Efetivo, Pessoas-Usuário, Postos, Unidades, Veículos, Alertas, Crachás, Gerencia",
+			modulos: "Relatórios, Relatórios-Efetivo, Relatórios-Veículo, Pessoas, Pessoas-Efetivo, Pessoas-Usuário, Postos, Unidades, Veículos, Alertas, Crachás, Gerência",
 			ativo_usuario: true
 		});
 
