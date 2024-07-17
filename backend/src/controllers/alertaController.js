@@ -1,33 +1,21 @@
 import Entity from '../models/Alerta.js';
 import { Op } from 'sequelize';
-import { parse, formatISO, isWithinInterval } from 'date-fns';
 
 class AlertaController {
 	static getAllEntities = async (req, res) => {
-		const { page = 1, categoria, data } = req.query;
+		const { page = 1, nome_alerta, cor } = req.query;
 		const limit = 10;
 		let lastPage = 1;
 
 		try {
 			let whereCondition = {};
 
-			if (categoria) {
-				whereCondition.categoria = { [Op.like]: `%${categoria}%` };
+			if (nome_alerta) {
+				whereCondition.nome_alerta = { [Op.like]: `%${nome_alerta}%` };
 			}
 
-			if (data) {
-				const [startDateString, endDateString] = data.split(',').map(decodeURIComponent);
-
-				const startDate = new Date(startDateString);
-				const endDate = new Date(endDateString);
-
-				if (isNaN(startDate) || isNaN(endDate)) {
-					throw new Error('Invalid date format');
-				}
-
-				whereCondition.data = {
-					[Op.between]: [startDate.toISOString(), endDate.toISOString()]
-				};
+			if (cor) {
+				whereCondition.cor = { [Op.like]: `%${cor}%` };
 			}
 
 			whereCondition.ativo_alerta = { [Op.like]: true };
@@ -56,31 +44,14 @@ class AlertaController {
 		}
 	};
 
-
-	static getEntityById = async (req, res) => {
-		try {
-			const entity = await Entity.findByPk(req.params.id);
-			if (entity) {
-				return res.status(200).json(entity);
-			} else {
-				return res.status(400).send({
-					message: `Id ${req.params.id} not found!`
-				});
-			}
-		} catch (error) {
-			return res.status(500).send({ message: `${error.message}` });
-		}
-	};
-
 	static createEntity = async (req, res) => {
 		try {
-			const { categoria, mensagem, ativo_alerta, sinc } = req.body;
+			const { nome_alerta, cor, ativo_alerta } = req.body;
 
 			const createdEntity = await Entity.create({
-				categoria,
-				mensagem,
-				ativo_alerta,
-				sinc
+				nome_alerta,
+				cor,
+				ativo_alerta
 			});
 			res.status(201).json(createdEntity);
 		} catch (error) {
@@ -94,15 +65,14 @@ class AlertaController {
 
 	static updateEntity = async (req, res) => {
 		try {
-			const { categoria, mensagem, ativo_alerta, sinc } = req.body;
+			const { nome_alerta, cor, ativo_alerta } = req.body;
 			const entityId = req.params.id;
 
 			const [updatedRows] = await Entity.update(
 				{
-					categoria,
-					mensagem,
-					ativo_alerta,
-					sinc
+					nome_alerta,
+					cor,
+					ativo_alerta
 				},
 				{ where: { id: entityId } }
 			);
@@ -116,6 +86,21 @@ class AlertaController {
 			}
 		} catch (error) {
 			res.status(500).send({ message: `${error.message}` });
+		}
+	};
+
+	static getEntityById = async (req, res) => {
+		try {
+			const entity = await Entity.findByPk(req.params.id);
+			if (entity) {
+				return res.status(200).json(entity);
+			} else {
+				return res.status(400).send({
+					message: `Id ${req.params.id} not found!`
+				});
+			}
+		} catch (error) {
+			return res.status(500).send({ message: `${error.message}` });
 		}
 	};
 

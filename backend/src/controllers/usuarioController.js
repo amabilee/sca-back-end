@@ -1,225 +1,189 @@
+import db from '../config/dbConnect.js';
 import Entity from '../models/Usuario.js';
-import Alerta from '../models/Alerta.js';
 import bcrypt from 'bcrypt';
 import { Op } from 'sequelize';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+import UsuarioHasModulo from '../models/usuarioHasModulo.js';
 import verifyPassword from '../util/verifyPassword.js';
-import NoEntityError from '../util/customErrors/NoEntityError.js';
+
+dotenv.config()
 
 class UserController {
 
-	static getAllEntities = async (req, res) => {
-		const { page = 1, nome, cpf, nivel_acesso, modulos } = req.query;
-		const limit = 10;
-		let lastPage = 1;
-		try {
-			let whereCondition = {}
-			if (nome) {
-				whereCondition.nome = { [Op.like]: `%${nome}%` }
-			}
-			if (cpf) {
-				whereCondition.cpf = { [Op.like]: `%${cpf}%` }
-			}
-			if (nivel_acesso) {
-				whereCondition.nivel_acesso = { [Op.like]: `%${nivel_acesso}%` }
-			}
-			if (modulos) {
-				whereCondition.modulos = { [Op.like]: `%${modulos}%` }
-			}
+  static login = async (req, res) => {
+    const { usuario, senha } = req.body;
+    try {
+      const entity = await Entity.findOne({ where: { usuario } });
+      if (!entity) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+      const isPasswordValid = await verifyPassword(entity, senha);
 
-			whereCondition.ativo_usuario = { [Op.like]: true }
+      if (!isPasswordValid) {
+        return res.status(401).json({ unauthorized: 'Credenciais inválidas' });
+      }
 
-			const { count, rows: entities } = await Entity.findAndCountAll({
-				where: whereCondition,
-				order: [['id', 'ASC']],
-				offset: Number(page * limit - limit),
-				limit: limit
-			});
+      const jwtToken = jwt.sign({ id: entity.id }, process.env.JWT_SECRET_KEY, { expiresIn: '24h' });
 
-			const totalPages = Math.ceil(count / limit);
+      delete entity.dataValues.senha;
 
-			entities.forEach((entity) => {
-				delete entity.dataValues.senha;
-			});
+      return res.status(200).send({ jwtToken, entity });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  };
 
-			const pagination = {
-				path: '/usuario',
-				page,
-				prev_page: page - 1 >= 1 ? page - 1 : false,
-				next_page: Number(page) + Number(1) > lastPage ? false : Number(page) + Number(1),
-				totalPages,
-				totalItems: count,
-			};
-			res.status(200).json({ entities, pagination });
-		} catch (error) {
-			res.status(500).send({ message: `${error.message}` });
-		}
-	};
+  static getAllEntities = async (req, res) => {
+    const { page = 1 } = req.query;
+    const limit = 10;
 
-	static createEntity = async (req, res) => {
-		try {
-		  const { nome, cpf, usuario, senha, nivel_acesso, modulos, ativo_usuario } = req.body;
-		  const senhaHashed = await bcrypt.hash(senha, 10);
-	  
-		  const createdEntity = await Entity.create({
-			nome,
-			cpf,
-			usuario,
-			senha: senhaHashed,
-			nivel_acesso,
-			modulos,
-			ativo_usuario
-		  });
-	  
-		  await Alerta.create({
-			categoria: "Sucesso",
-			mensagem: "Usuário criado com sucesso",
-			ativo_alerta: true
-		  });
-	  
-		  delete createdEntity.dataValues.senha;
-	  
-		  res.status(201).send({
-			usuario: createdEntity
-		  });
-		} catch (error) {
-		  await Alerta.create({
-			categoria: "Erro",
-			mensagem: "Erro ao criar um usuário",
-			ativo_alerta: true
-		  });
-	  
-		  if (error.name === 'SequelizeUniqueConstraintError') {
-			res.status(400).send({ message: 'Valores já cadastrados!' });
-		  } else {
-			res.status(500).send({ message: `${error.message}` });
-		  }
-		}
-	  };
+    try {
 
-	static updateEntity = async (req, res) => {
-		try {
-			const { nome, cpf, usuario, nivel_acesso, ativo_usuario, modulos } = req.body;
-			const entityId = req.params.id;
+      const { count, rows: entities } = await Entity.findAndCountAll({
+        order: [['id', 'ASC']],
+        offset: Number(page * limit - limit),
+        limit: limit
+      });
 
-			const usuarioAlreadyExist = await Entity.findOne({
-				where: {
-					usuario,
-					id: { [Op.not]: entityId } 
-				}
-			});
+      const totalPages = Math.ceil(count / limit);
 
-			if (usuarioAlreadyExist) {
-				return res.status(400).send({message: `Já existe um perfil com este usuário.`});
-			}
+      entities.forEach(entity => {
+        delete entity.dataValues.senha;
+      });
 
-			const [updatedRows] = await Entity.update(
-				{
-					nome,
-					cpf,
-					usuario,
-					nivel_acesso,
-					ativo_usuario,
-					modulos
-				},
-				{ where: { id: entityId } }
-			);
+      const pagination = {
+        path: '/usuario',
+        page: Number(page),
+        prev_page: page > 1 ? Number(page) - 1 : false,
+        next_page: Number(page) < totalPages ? Number(page) + 1 : false,
+        totalPages,
+        totalItems: count
+      };
 
-			if (updatedRows > 0) {
-				if (ativo_usuario == false){
-					await Alerta.create({
-						categoria: "Sucesso",
-						mensagem: "Usuário deletado com sucesso",
-						ativo_alerta: true
-					  });
-				} else {
-					await Alerta.create({
-						categoria: "Sucesso",
-						mensagem: "Usuário alterado com sucesso",
-						ativo_alerta: true
-					  });
-				}
-				res.status(200).send({ message: 'Entity updated successfully' });
-			} else {
-				res.status(404).send({
-					message: `Id ${entityId} not found!`
-				});
-			}
-		} catch (error) {
-			const { ativo_usuario } = req.body;
-			if (ativo_usuario == false){
-				await Alerta.create({
-					categoria: "Erro",
-					mensagem: "Erro ao deletar um usuário",
-					ativo_alerta: true
-				  });
-			} else {
-				await Alerta.create({
-					categoria: "Erro",
-					mensagem: "Erro ao editar um usuário",
-					ativo_alerta: true
-				  });
-			}
-			res.status(500).send({ message: `${error.message}` });
-		}
-	};
+      res.status(200).json({ entities, pagination });
+    } catch (error) {
+      res.status(500).send({ message: `${error.message}` });
+    }
+  };
 
-	static getEntityById = async (req, res) => {
-		try {
-			const entity = await Entity.findByPk(req.params.id);
+  static createEntity = async (req, res) => {
+    const transaction = await db.transaction();
+    try {
+      const { usuario, senha, nivel_acesso, modulos } = req.body;
+      const senhaHashed = await bcrypt.hash(senha, 10);
 
-			if (entity) {
-				delete entity.dataValues.senha;
-				return res.status(200).json(entity);
-			} else {
-				return res.status(400).send({
-					message: `Id ${req.params.id} not found!`
-				});
-			}
-		} catch (error) {
-			return res.status(500).send({ message: `${error}` });
-		}
-	};
+      const createdUsuario = await Entity.create(
+        {
+          usuario,
+          senha: senhaHashed,
+          nivel_acesso
+        },
+        { transaction }
+      );
+      for (const moduloId of modulos) {
+        await UsuarioHasModulo.create(
+          {
+            id_usuario: createdUsuario.id,
+            id_modulo: moduloId
+          },
+          { transaction }
+        );
+      }
 
-	static login = async (req, res) => {
-		const { usuario, senha } = req.body;
-		try {
-			const entity = await Entity.findOne({ where: { usuario } });
+      await transaction.commit();
+      res.status(201).send({ usuario: createdUsuario });
+    } catch (error) {
+      await transaction.rollback();
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        res.status(400).send({ message: 'Valores já cadastrados!' });
+      } else {
+        res.status(500).send({ message: `${error.message}` });
+      }
+    }
+  };
 
-			const isPasswordValid = await verifyPassword(entity, senha);
+  static updateEntity = async (req, res) => {
+    try {
+      const {
+        nome,
+        cpf,
+        usuario,
+        nivel_acesso,
+        ativo_usuario,
+        modulos
+      } = req.body;
+      const entityId = req.params.id;
 
-			// if (!isPasswordValid) {
-			// 	return res.status(401).json({ unauthorized: 'Credenciais inválidas' });
-			// }
+      const usuarioAlreadyExist = await Entity.findOne({
+        where: {
+          usuario,
+          id: { [Op.not]: entityId }
+        }
+      });
 
-			const jwtToken = jwt.sign({ id: entity.id }, process.env.JWT_SECRET_KEY, { expiresIn: '24h' });
+      if (usuarioAlreadyExist) {
+        return res
+          .status(400)
+          .send({ message: `Já existe um perfil com este usuário.` });
+      }
 
-			delete entity.dataValues.senha;
+      const [updatedRows] = await Entity.update(
+        {
+          nome,
+          cpf,
+          usuario,
+          nivel_acesso,
+          ativo_usuario,
+          modulos
+        },
+        { where: { id: entityId } }
+      );
 
-			return res.status(200).send({ jwtToken, entity });
-		} catch (error) {
-			if (error instanceof NoEntityError) {
-				return res.status(400).send({ mensagem: 'Usuario não encontrado!' });
-			}
-			res.status(500).json({ error: error.message });
-		}
-	};
+      if (updatedRows > 0) {
+        res.status(200).send({ message: 'Entity updated successfully' });
+      } else {
+        res.status(404).send({
+          message: `Id ${entityId} not found!`
+        });
+      }
+    } catch (error) {
+      res.status(500).send({ message: `${error.message}` });
+    }
+  };
 
-	static deleteEntity = async (req, res) => {
-		try {
-			const entity = await Entity.findByPk(req.params.id);
-			if (entity) {
-				await entity.destroy();
-				return res.status(204).send();
-			} else {
-				return res.status(400).send({
-					message: `Id ${req.params.id} not found!`
-				});
-			}
-		} catch (error) {
-			return res.status(500).send({ message: `${error}` });
-		}
-	};
+  static getEntityById = async (req, res) => {
+    try {
+      const entity = await Entity.findByPk(req.params.id);
+
+      if (entity) {
+        delete entity.dataValues.senha;
+        res.status(200).json(entity);
+      } else {
+        res.status(400).send({
+          message: `Id ${req.params.id} not found!`
+        });
+      }
+    } catch (error) {
+      res.status(500).send({ message: `${error}` });
+    }
+  };
+
+  static deleteEntity = async (req, res) => {
+    try {
+      const entity = await Entity.findByPk(req.params.id);
+      if (entity) {
+        await entity.destroy();
+        return res.status(204).send();
+      } else {
+        return res.status(404).send({
+          message: `Id ${req.params.id} not found!`
+        });
+      }
+    } catch (error) {
+      res.status(500).send({ message: `${error}` });
+    }
+  };
 }
 
 export default UserController;

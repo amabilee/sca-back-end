@@ -1,6 +1,6 @@
-import Entity from '../models/QRCode.js';
+import QRCode from '../models/QRCode.js';
 import Visitante from '../models/Visitante.js';
-import Depentende from '../models/Dependente.js';
+import Dependente from '../models/Dependente.js';
 import Veiculo from '../models/Veiculo.js';
 import Efetivo from '../models/Efetivo.js';
 
@@ -9,10 +9,9 @@ class QRCodeController {
 		const { page = 1 } = req.query;
 		const limit = 10;
 		let lastPage = 1;
-		const countEntity = await Entity.count();
 
 		try {
-			const entities = await Entity.findAll({
+			const { count, rows: entities } = await QRCode.findAndCountAll({
 				order: [['qrcode', 'ASC']],
 				offset: Number(page * limit - limit),
 				limit: limit
@@ -24,8 +23,9 @@ class QRCodeController {
 				prev_page: page - 1 >= 1 ? page - 1 : false,
 				next_page: Number(page) + Number(1) > lastPage ? false : Number(page) + Number(1),
 				lastPage,
-				totalRegisters: countEntity
+				totalRegisters: count
 			};
+
 			res.status(200).json({ entities, pagination });
 		} catch (error) {
 			res.status(500).send({ message: `${error.message}` });
@@ -34,13 +34,15 @@ class QRCodeController {
 
 	static getEntityByQRCode = async (req, res) => {
 		const { qrcode } = req.params;
+
 		try {
-			const entity = await Entity.findByPk(qrcode);
+			const entity = await QRCode.findByPk(qrcode);
+
 			if (entity) {
 				const fullEntity = await this._getEntity(entity);
 				return res.status(200).json(fullEntity);
 			} else {
-				return res.status(400).send({
+				return res.status(404).send({
 					message: `QRCode ${qrcode} not found!`
 				});
 			}
@@ -50,17 +52,18 @@ class QRCodeController {
 	};
 
 	static createEntity = async (req, res) => {
-		try {
-			const { nivel_acesso, entity } = req.body;
+		const { qrcode, nivel_acesso } = req.body;
 
-			const createdEntity = await Entity.create({
-				nivel_acesso,
-				entity
+		try {
+			const createdEntity = await QRCode.create({
+				qrcode,
+				nivel_acesso
 			});
-			res.status(201).json(createdEntity);
+
+			res.status(201).json({ message: 'QrCode created'});
 		} catch (error) {
-			if (error.name == 'SequelizeUniqueConstraintError') {
-				res.status(400).send({ message: 'Valores já cadastrados!' });
+			if (error.name === 'SequelizeUniqueConstraintError') {
+				res.status(400).send({ message: 'QRCode already exists!' });
 			} else {
 				res.status(500).send({ message: `${error.message}` });
 			}
@@ -69,10 +72,10 @@ class QRCodeController {
 
 	static updateEntity = async (req, res) => {
 		const { qrcode } = req.params;
-		try {
-			const { nivel_acesso, entity } = req.body;
+		const { nivel_acesso, entity } = req.body;
 
-			const [updatedRows] = await Entity.update(
+		try {
+			const [updatedRows] = await QRCode.update(
 				{
 					nivel_acesso,
 					entity
@@ -81,9 +84,9 @@ class QRCodeController {
 			);
 
 			if (updatedRows > 0) {
-				res.status(200).send({ message: 'Entity updated successfully' });
+				res.status(200).send({ message: 'QRCode updated successfully' });
 			} else {
-				res.status(400).send({
+				res.status(404).send({
 					message: `QRCode ${qrcode} not found!`
 				});
 			}
@@ -94,43 +97,48 @@ class QRCodeController {
 
 	static deleteEntity = async (req, res) => {
 		const { qrcode } = req.params;
+
 		try {
-			const entity = await Entity.findByPk(qrcode);
+			const entity = await QRCode.findByPk(qrcode);
+
 			if (entity) {
 				await entity.destroy();
-				return res.status(204).send();
+				res.status(204).send();
 			} else {
-				return res.status(400).send({
+				res.status(404).send({
 					message: `QRCode ${qrcode} not found!`
 				});
 			}
 		} catch (error) {
-			return res.status(500).send({ message: `${error.message}` });
+			res.status(500).send({ message: `${error.message}` });
 		}
 	};
 
 	static _getEntity = async (qrcode) => {
-		if (qrcode.entity === 'efetivo') {
-			const efetivo = await Efetivo.findOne({ where: { qrcode_efetivo: qrcode.qrcode } });
-			qrcode.dataValues.efetivo = efetivo.dataValues;
+		let fullEntity = { ...qrcode.dataValues };
 
-			return qrcode;
-		} else if (qrcode.entity === 'visitante') {
-			const visitante = await Visitante.findOne({ where: { qrcode_visitante: qrcode.qrcode } });
-			qrcode.dataValues.visitante = visitante.dataValues;
-
-			return qrcode;
-		} else if (qrcode.entity === 'dependente') {
-			const dependente = await Depentende.findOne({ where: { qrcode: qrcode.qrcode } });
-			qrcode.dataValues.dependente = dependente.dataValues;
-
-			return qrcode;
-		} else if (qrcode.entity === 'veiculo') {
-			const veiculo = await Veiculo.findOne({ where: { qrcode: qrcode.qrcode } });
-			qrcode.dataValues.veiculo = veiculo.dataValues;
-
-			return qrcode;
+		switch (qrcode.entity) {
+			case 'efetivo':
+				const efetivo = await Efetivo.findOne({ where: { qrcode_efetivo: qrcode.qrcode } });
+				fullEntity = { ...fullEntity, efetivo: efetivo ? efetivo.dataValues : null };
+				break;
+			case 'visitante':
+				const visitante = await Visitante.findOne({ where: { qrcode_visitante: qrcode.qrcode } });
+				fullEntity = { ...fullEntity, visitante: visitante ? visitante.dataValues : null };
+				break;
+			case 'dependente':
+				const dependente = await Dependente.findOne({ where: { qrcode: qrcode.qrcode } });
+				fullEntity = { ...fullEntity, dependente: dependente ? dependente.dataValues : null };
+				break;
+			case 'veiculo':
+				const veiculo = await Veiculo.findOne({ where: { qrcode: qrcode.qrcode } });
+				fullEntity = { ...fullEntity, veiculo: veiculo ? veiculo.dataValues : null };
+				break;
+			default:
+				break;
 		}
+
+		return fullEntity;
 	};
 }
 

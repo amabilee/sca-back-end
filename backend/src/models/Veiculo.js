@@ -18,14 +18,6 @@ const Veiculo = db.define(
 			},
 			allowNull: true
 		},
-		id_visitante: {
-			type: DataTypes.INTEGER,
-			references: {
-				model: 'visitante',
-				key: 'id'
-			},
-			allowNull: true
-		},
 		tipo: {
 			type: DataTypes.STRING(20),
 			allowNull: false
@@ -42,29 +34,36 @@ const Veiculo = db.define(
 			type: DataTypes.STRING(40),
 			allowNull: true
 		},
+		marca: {
+			type: DataTypes.STRING(100),
+			allowNull: true
+		},
 		renavam: {
-			type: DataTypes.BIGINT(13),
+			type: DataTypes.BIGINT,
 			allowNull: false
 		},
 		qrcode: {
-			type: DataTypes.INTEGER,
+			type: DataTypes.INTEGER.UNSIGNED.ZEROFILL,
 			references: {
 				model: 'qrcode',
 				key: 'qrcode'
 			},
-			allowNull: false
+			allowNull: true
 		},
 		ativo_veiculo: {
 			type: DataTypes.BOOLEAN,
-			allowNull: false
+			allowNull: false,
+			defaultValue: true
 		},
 		sinc_veiculo: {
 			type: DataTypes.BIGINT,
-			allowNull: true
+			allowNull: true,
+			defaultValue: 1
 		}
 	},
 	{
-		tableName: 'veiculo'
+		tableName: 'veiculo',
+		timestamps: false
 	}
 );
 

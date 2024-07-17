@@ -3,26 +3,54 @@ import QRCode from '../models/QRCode.js';
 
 class VeiculoController {
 	static getAllEntities = async (req, res) => {
-		const { page = 1 } = req.query;
+		const { page = 1, ...filters } = req.query;
 		const limit = 10;
-		let lastPage = 1;
-		const countEntity = await Entity.count();
+		let whereClause = {};
+		
+		Object.keys(filters).forEach(key => {
+			if (filters[key]) {
+				if (key === 'qrcode') {
+					whereClause[key] = {
+						[Op.eq]: filters[key]
+					};
+				} else if (key === 'tipo' || key === 'cor_veiculo' || key === 'placa' || key === 'modelo' || key === 'marca') {
+					whereClause[key] = {
+						[Op.like]: `%${filters[key]}%`
+					};
+				} else if (key === 'renavam') {
+					whereClause[key] = {
+						[Op.eq]: filters[key]
+					};
+				} else if (key === 'ativo_veiculo') {
+					whereClause[key] = {
+						[Op.eq]: filters[key] === 'true'
+					};
+				} else if (key === 'sinc_veiculo') {
+					whereClause[key] = {
+						[Op.eq]: filters[key]
+					};
+				}
+			}
+		});
 
 		try {
-			const entities = await Entity.findAll({
+			const { count: totalRegisters, rows: entities } = await Entity.findAndCountAll({
+				where: whereClause,
 				order: [['id', 'ASC']],
 				offset: Number(page * limit - limit),
 				limit: limit
 			});
 
+			const lastPage = Math.ceil(totalRegisters / limit);
 			const pagination = {
 				path: '/veiculo',
-				page,
-				prev_page: page - 1 >= 1 ? page - 1 : false,
-				next_page: Number(page) + Number(1) > lastPage ? false : Number(page) + Number(1),
+				page: Number(page),
+				prev_page: page > 1 ? Number(page) - 1 : false,
+				next_page: Number(page) < lastPage ? Number(page) + 1 : false,
 				lastPage,
-				totalRegisters: countEntity
+				totalRegisters
 			};
+
 			res.status(200).json({ entities, pagination });
 		} catch (error) {
 			res.status(500).send({ message: `${error.message}` });
@@ -35,42 +63,43 @@ class VeiculoController {
 			if (entity) {
 				return res.status(200).json(entity);
 			} else {
-				return res.status(400).send({
-					message: `Id ${req.params.id} not found!`
+				return res.status(404).send({
+					message: `Veiculo ${req.params.id} not found!`
 				});
 			}
 		} catch (error) {
-			return res.status(500).send({ message: `${error}` });
+			return res.status(500).send({ message: `${error.message}` });
 		}
 	};
 
 	static createEntity = async (req, res) => {
+		let createdQRCode;
+
 		try {
 			const {
 				id_efetivo,
-				id_visitante,
 				tipo,
 				cor_veiculo,
 				placa,
 				modelo,
+				marca,
 				renavam,
-                nivel_acesso,
 				ativo_veiculo,
 				sinc_veiculo
 			} = req.body;
 
-            var createdQRCode = await QRCode.create({
-				nivel_acesso,
+			createdQRCode = await QRCode.create({
+				nivel_acesso: req.body.nivel_acesso,
 				entity: 'veiculo'
 			});
 
 			const createdEntity = await Entity.create({
 				id_efetivo,
-				id_visitante,
 				tipo,
 				cor_veiculo,
 				placa,
 				modelo,
+				marca,
 				renavam,
 				qrcode: createdQRCode.qrcode,
 				ativo_veiculo,
@@ -79,12 +108,12 @@ class VeiculoController {
 
 			return res.status(201).json(createdEntity);
 		} catch (error) {
-			if (error.name == 'SequelizeUniqueConstraintError') {
-                console.log(createdQRCode)
-				if(createdQRCode) createdQRCode.destroy();
+			if (createdQRCode) {
+				await createdQRCode.destroy();
+			}
+			if (error.name === 'SequelizeUniqueConstraintError') {
 				return res.status(400).send({ message: 'Valores já cadastrados!' });
 			} else {
-				if(createdQRCode) createdQRCode.destroy();
 				return res.status(500).send({ message: `${error.message}` });
 			}
 		}
@@ -95,11 +124,11 @@ class VeiculoController {
 			const { id } = req.params;
 			const {
 				id_efetivo,
-				id_visitante,
 				tipo,
 				cor_veiculo,
 				placa,
 				modelo,
+				marca,
 				renavam,
 				qrcode,
 				ativo_veiculo,
@@ -109,11 +138,11 @@ class VeiculoController {
 			const [updatedRows] = await Entity.update(
 				{
 					id_efetivo,
-					id_visitante,
 					tipo,
 					cor_veiculo,
 					placa,
 					modelo,
+					marca,
 					renavam,
 					qrcode,
 					ativo_veiculo,
@@ -123,9 +152,9 @@ class VeiculoController {
 			);
 
 			if (updatedRows > 0) {
-				res.status(200).send({ message: 'Entity updated successfully' });
+				res.status(200).send({ message: 'Veiculo updated successfully' });
 			} else {
-				res.status(400).send({
+				res.status(404).send({
 					message: `Veiculo ${id} not found!`
 				});
 			}
@@ -141,12 +170,12 @@ class VeiculoController {
 				await entity.destroy();
 				return res.status(204).send();
 			} else {
-				return res.status(400).send({
+				return res.status(404).send({
 					message: `Veiculo ${req.params.id} not found!`
 				});
 			}
 		} catch (error) {
-			return res.status(500).send({ message: `${error}` });
+			return res.status(500).send({ message: `${error.message}` });
 		}
 	};
 }

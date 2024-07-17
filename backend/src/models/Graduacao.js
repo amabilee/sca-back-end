@@ -24,7 +24,8 @@ const Graduacao = db.define(
 		}
 	},
 	{
-		tableName: 'graduacao'
+		tableName: 'graduacao',
+		timestamps: false
 	}
 );
 

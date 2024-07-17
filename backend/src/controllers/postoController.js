@@ -1,6 +1,5 @@
-import { where, Op } from 'sequelize';
+import { Op } from 'sequelize';
 import Entity from '../models/Posto.js';
-import Alerta from '../models/Alerta.js';
 
 class PostoController {
 	static getAllEntities = async (req, res) => {
@@ -53,18 +52,9 @@ class PostoController {
 				ativo_posto,
 				sinc_posto
 			});
-			await Alerta.create({
-				categoria: "Sucesso",
-				mensagem: "Posto de serviço criado com sucesso",
-				ativo_alerta: true
-			});
+
 			res.status(201).json(createdEntity);
 		} catch (error) {
-			await Alerta.create({
-				categoria: "Erro",
-				mensagem: "Erro ao criar um posto de serviço",
-				ativo_alerta: true
-			});
 			if (error.name == 'SequelizeUniqueConstraintError') {
 				res.status(400).send({ message: 'Valores já cadastrados!' });
 			} else {
@@ -89,19 +79,6 @@ class PostoController {
 			);
 
 			if (updatedRows > 0) {
-				if (ativo_posto == false) {
-					await Alerta.create({
-						categoria: "Sucesso",
-						mensagem: "Posto de serviço deletado com sucesso",
-						ativo_alerta: true
-					});
-				} else {
-					await Alerta.create({
-						categoria: "Sucesso",
-						mensagem: "Posto de serviço alterado com sucesso",
-						ativo_alerta: true
-					});
-				}
 				res.status(200).send({ message: 'Entity updated successfully' });
 			} else {
 				res.status(400).send({
@@ -109,20 +86,6 @@ class PostoController {
 				});
 			}
 		} catch (error) {
-			const { ativo_posto } = req.body;
-			if (ativo_posto == false) {
-				await Alerta.create({
-					categoria: "Erro",
-					mensagem: "Erro ao deletar um posto de serviço",
-					ativo_alerta: true
-				});
-			} else {
-				await Alerta.create({
-					categoria: "Erro",
-					mensagem: "Erro ao editar um posto de serviço",
-					ativo_alerta: true
-				});
-			}
 			res.status(500).send({ message: `${error.message}` });
 		}
 	};

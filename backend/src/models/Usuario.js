@@ -10,38 +10,32 @@ const Usuario = db.define(
 			autoIncrement: true,
 			primaryKey: true
 		},
-		nome: {
-			type: DataTypes.STRING(64),
-			allowNull: false
-		},
-		cpf: {
-			type: DataTypes.STRING(64),
-			allowNull: false
-		},
 		usuario: {
-			type: DataTypes.INTEGER,
-			allowNull: true,
+			type: DataTypes.INTEGER.UNSIGNED.ZEROFILL,
+			allowNull: false,
 			unique: true
 		},
 		senha: {
-			type: DataTypes.STRING(64),
+			type: DataTypes.STRING(60),
 			allowNull: false
 		},
 		nivel_acesso: {
 			type: DataTypes.INTEGER,
 			allowNull: false
 		},
-		modulos:{
-			type: DataTypes.STRING(256),
-			allowNull: false
-		},
-		ativo_usuario: {
+		flag: {
 			type: DataTypes.BOOLEAN,
-			allowNull: false
+			allowNull: false,
+			defaultValue: false
+		},
+		auth: {
+			type: DataTypes.STRING(255),
+			allowNull: true
 		}
 	},
 	{
-		tableName: 'usuario'
+		tableName: 'usuario',
+		timestamps: false
 	}
 );
 

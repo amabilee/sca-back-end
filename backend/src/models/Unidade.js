@@ -14,20 +14,8 @@ const Unidade = db.define(
             type: DataTypes.STRING(50),
             allowNull: false
         },
-        nivel_acesso: {
-            type: DataTypes.INTEGER,
-            allowNull: false
-        },
         ativo_unidade: {
             type: DataTypes.BOOLEAN,
-            allowNull: false
-        },
-        maximo_efetivo: {
-            type: DataTypes.INTEGER,
-            allowNull: false
-        },
-        maximo_veiculo: {
-            type: DataTypes.INTEGER,
             allowNull: false
         },
         sinc: {
@@ -36,7 +24,8 @@ const Unidade = db.define(
         }
     },
     {
-        tableName: 'unidade'
+        tableName: 'unidade',
+        timestamps: false
     }
 );
 

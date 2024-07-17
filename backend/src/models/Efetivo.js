@@ -12,19 +12,11 @@ const Efetivo = db.define(
         },
         id_graduacao: {
             type: DataTypes.INTEGER,
+            allowNull: true,
             references: {
                 model: 'graduacao',
                 key: 'id'
-            },
-            allowNull: true
-        },
-        id_posto: {
-            type: DataTypes.INTEGER,
-            references: {
-                model: 'posto',
-                key: 'id'
-            },
-            allowNull: true
+            }
         },
         nome_completo: {
             type: DataTypes.STRING(50),
@@ -34,63 +26,70 @@ const Efetivo = db.define(
             type: DataTypes.STRING(30),
             allowNull: false
         },
-        cpf: {
-            type: DataTypes.STRING(11),
-            allowNull: false,
-            unique: true
-        },
-        saram: {
-            type: DataTypes.STRING,
-            allowNull: false,
-            unique: true
-        },
         foto: {
             type: DataTypes.BLOB,
             allowNull: true
         },
         dependente: {
             type: DataTypes.BOOLEAN,
-            allowNull: true
+            allowNull: false,
+            defaultValue: false
         },
         id_alerta: {
             type: DataTypes.INTEGER,
+            allowNull: false,
             references: {
                 model: 'alerta',
                 key: 'id'
-            },
-            allowNull: false
+            }
         },
         id_unidade: {
             type: DataTypes.INTEGER,
+            allowNull: false,
             references: {
                 model: 'unidade',
                 key: 'id'
-            },
-            allowNull: false
+            }
         },
         qrcode_efetivo: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.INTEGER(7).UNSIGNED.ZEROFILL,
+            allowNull: true,
+            unique: true,
             references: {
                 model: 'qrcode',
                 key: 'qrcode'
-            },
+            }
+        },
+        email: {
+            type: DataTypes.STRING(40),
             allowNull: false
         },
-        senha: {
-            type: DataTypes.STRING(64),
-            allowNull: false
+        cnh: {
+            type: DataTypes.BIGINT,
+            allowNull: true
+        },
+        val_cnh: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
+        nivel_acesso: {
+            type: DataTypes.STRING(20),
+            allowNull: true
         },
         ativo_efetivo: {
             type: DataTypes.BOOLEAN,
-            allowNull: true
+            allowNull: false,
+            defaultValue: true
         },
         sinc_efetivo: {
             type: DataTypes.BIGINT,
-            allowNull: true
+            allowNull: true,
+            defaultValue: 1
         }
     },
     {
-        tableName: 'efetivo'
+        tableName: 'efetivo',
+        timestamps: false // Assuming the table does not have timestamp columns
     }
 );
 

@@ -14,6 +14,7 @@ import visitantes from './visitanteRoutes.js';
 import dependentes from './dependenteRoutes.js';
 import alerta from './alertaRoutes.js';
 import cartaovacina from './cartaoVacinaRoutes.js';
+import modulo from './moduloRoutes.js';
 
 const routes = (app) => {
 	const swaggerUiOptions = {
@@ -37,6 +38,7 @@ const routes = (app) => {
 	app.use('/', dependentes);
 	app.use('/', alerta);
 	app.use('/', cartaovacina);
+	app.use('/', modulo);
 };
 
 export default routes;

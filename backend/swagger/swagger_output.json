@@ -40,26 +40,6 @@
             "name": "page",
             "in": "query",
             "type": "string"
-          },
-          {
-            "name": "nome",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "cpf",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "nivel_acesso",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "modulos",
-            "in": "query",
-            "type": "string"
           }
         ],
         "responses": {
@@ -83,12 +63,6 @@
             "schema": {
               "type": "object",
               "properties": {
-                "nome": {
-                  "example": "any"
-                },
-                "cpf": {
-                  "example": "any"
-                },
                 "usuario": {
                   "example": "any"
                 },
@@ -99,9 +73,6 @@
                   "example": "any"
                 },
                 "modulos": {
-                  "example": "any"
-                },
-                "ativo_usuario": {
                   "example": "any"
                 }
               }
@@ -165,16 +136,22 @@
             "schema": {
               "type": "object",
               "properties": {
-                "usuario": {
+                "nome": {
                   "example": "any"
                 },
-                "senha": {
+                "cpf": {
+                  "example": "any"
+                },
+                "usuario": {
                   "example": "any"
                 },
                 "nivel_acesso": {
                   "example": "any"
                 },
-                "flag": {
+                "ativo_usuario": {
+                  "example": "any"
+                },
+                "modulos": {
                   "example": "any"
                 }
               }
@@ -187,6 +164,9 @@
           },
           "400": {
             "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -210,8 +190,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request"
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -246,8 +226,11 @@
           "200": {
             "description": "OK"
           },
-          "400": {
-            "description": "Bad Request"
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -290,9 +273,6 @@
               "type": "object",
               "properties": {
                 "id_graduacao": {
-                  "example": "any"
-                },
-                "id_posto": {
                   "example": "any"
                 },
                 "nome_completo": {
@@ -363,8 +343,8 @@
           "200": {
             "description": "OK"
           },
-          "400": {
-            "description": "Bad Request"
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -390,9 +370,6 @@
               "type": "object",
               "properties": {
                 "id_graduacao": {
-                  "example": "any"
-                },
-                "id_posto": {
                   "example": "any"
                 },
                 "nome_completo": {
@@ -436,8 +413,8 @@
           "200": {
             "description": "OK"
           },
-          "400": {
-            "description": "Bad Request"
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -461,8 +438,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request"
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -499,6 +476,9 @@
           },
           "400": {
             "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
           },
           "500": {
             "description": "Internal Server Error"
@@ -866,10 +846,10 @@
             "schema": {
               "type": "object",
               "properties": {
-                "nivel_acesso": {
+                "qrcode": {
                   "example": "any"
                 },
-                "entity": {
+                "nivel_acesso": {
                   "example": "any"
                 }
               }
@@ -907,8 +887,8 @@
           "200": {
             "description": "OK"
           },
-          "400": {
-            "description": "Bad Request"
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -947,8 +927,8 @@
           "200": {
             "description": "OK"
           },
-          "400": {
-            "description": "Bad Request"
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -972,8 +952,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request"
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -1361,11 +1341,6 @@
             "name": "nome",
             "in": "query",
             "type": "string"
-          },
-          {
-            "name": "nivel_acesso",
-            "in": "query",
-            "type": "string"
           }
         ],
         "responses": {
@@ -1393,15 +1368,6 @@
                   "example": "any"
                 },
                 "ativo_unidade": {
-                  "example": "any"
-                },
-                "maximo_efetivo": {
-                  "example": "any"
-                },
-                "maximo_veiculo": {
-                  "example": "any"
-                },
-                "nivel_acesso": {
                   "example": "any"
                 },
                 "sinc": {
@@ -1474,15 +1440,6 @@
                 "ativo_unidade": {
                   "example": "any"
                 },
-                "maximo_efetivo": {
-                  "example": "any"
-                },
-                "maximo_veiculo": {
-                  "example": "any"
-                },
-                "nivel_acesso": {
-                  "example": "any"
-                },
                 "sinc": {
                   "example": "any"
                 }
@@ -1539,6 +1496,11 @@
             "name": "page",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
@@ -1562,10 +1524,10 @@
             "schema": {
               "type": "object",
               "properties": {
-                "id_efetivo": {
+                "nivel_acesso": {
                   "example": "any"
                 },
-                "id_visitante": {
+                "id_efetivo": {
                   "example": "any"
                 },
                 "tipo": {
@@ -1580,10 +1542,10 @@
                 "modelo": {
                   "example": "any"
                 },
-                "renavam": {
+                "marca": {
                   "example": "any"
                 },
-                "nivel_acesso": {
+                "renavam": {
                   "example": "any"
                 },
                 "ativo_veiculo": {
@@ -1627,8 +1589,8 @@
           "200": {
             "description": "OK"
           },
-          "400": {
-            "description": "Bad Request"
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -1656,9 +1618,6 @@
                 "id_efetivo": {
                   "example": "any"
                 },
-                "id_visitante": {
-                  "example": "any"
-                },
                 "tipo": {
                   "example": "any"
                 },
@@ -1669,6 +1628,9 @@
                   "example": "any"
                 },
                 "modelo": {
+                  "example": "any"
+                },
+                "marca": {
                   "example": "any"
                 },
                 "renavam": {
@@ -1691,8 +1653,8 @@
           "200": {
             "description": "OK"
           },
-          "400": {
-            "description": "Bad Request"
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -1716,8 +1678,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request"
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -2011,6 +1973,16 @@
             "name": "page",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "nome_alerta",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "cor",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
@@ -2041,9 +2013,6 @@
                   "example": "any"
                 },
                 "ativo_alerta": {
-                  "example": "any"
-                },
-                "sinc": {
                   "example": "any"
                 }
               }
@@ -2114,9 +2083,6 @@
                   "example": "any"
                 },
                 "ativo_alerta": {
-                  "example": "any"
-                },
-                "sinc": {
                   "example": "any"
                 }
               }

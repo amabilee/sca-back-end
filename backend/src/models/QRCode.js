@@ -5,22 +5,22 @@ const QRCode = db.define(
 	'QRCode',
 	{
 		qrcode: {
-			type: DataTypes.INTEGER,
-            autoIncrement: true,
+			type: DataTypes.INTEGER(7).UNSIGNED.ZEROFILL,
+			primaryKey: true,
 			allowNull: false,
-			primaryKey: true
 		},
 		nivel_acesso: {
 			type: DataTypes.INTEGER,
-			allowNull: false
+			allowNull: false,
+			defaultValue: 1,
 		},
-		entity: {
-			type: DataTypes.ENUM('efetivo', 'visitante', 'dependente', 'veiculo'),
-			allowNull: false
-		}
 	},
 	{
-		tableName: 'qrcode'
+		tableName: 'qrcode',
+		timestamps: false,
+		engine: 'InnoDB',
+		charset: 'latin1',
+		autoIncrement: false,
 	}
 );
 
