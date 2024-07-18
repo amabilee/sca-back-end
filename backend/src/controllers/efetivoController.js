@@ -59,53 +59,65 @@ class EfetivoController {
 		}
 	};
 
+	static getEntityBySaram = async (req, res) => {
+		try {
+			const { qrcode_efetivo } = req.body
+
+			let whereCondition = {}
+			if (qrcode_efetivo){
+				whereCondition.qrcode_efetivo = { [Op.like]: `%${qrcode_efetivo}%` };
+			}
+			const entity = await Entity.findAll({
+				where: whereCondition,
+			});
+
+			if (entity) {
+				return res.status(200).json(entity);
+			} else {
+				return res.status(404).send({
+					message: `Entity with id ${req.params.id} not found!`
+				});
+			}
+		} catch (error) {
+			return res.status(500).send({ message: `${error.message}` });
+		}
+	};
+
 	static createEntity = async (req, res) => {
 		try {
 			const {
 				id_graduacao,
 				nome_completo,
 				nome_guerra,
-				cpf,
-				saram,
 				foto,
 				dependente,
+				id_alerta,
 				id_unidade,
-				senha,
+				qrcode_efetivo,
+				email,
+				cnh,
+				val_cnh,
 				nivel_acesso,
 				ativo_efetivo,
 				sinc_efetivo
 			} = req.body;
 
-			const senhaHashed = await bcrypt.hash(senha, 10);
-
-			const createdQRCode = await QRCode.create({
-				nivel_acesso,
-				entity: 'efetivo'
-			});
-
-			const createdAlerta = await Alerta.create({
-				nome_alerta: 'criação',
-				cor: 'verde',
-				ativo_alerta: true
-			});
-
 			const createdEntity = await Entity.create({
 				id_graduacao,
 				nome_completo,
 				nome_guerra,
-				cpf,
-				saram,
 				foto,
 				dependente,
-				id_alerta: createdAlerta.id,
+				id_alerta,
 				id_unidade,
-				qrcode_efetivo: createdQRCode.qrcode,
-				senha: senhaHashed,
+				qrcode_efetivo,
+				email,
+				cnh,
+				val_cnh,
+				nivel_acesso,
 				ativo_efetivo,
 				sinc_efetivo
 			});
-
-			delete createdEntity.dataValues.senha;
 
 			res.status(201).json(createdEntity);
 		} catch (error) {

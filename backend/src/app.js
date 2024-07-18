@@ -4,8 +4,9 @@ import db from './config/dbConnect.js';
 import routes from './routes/index.js';
 import seed from './seeds/index.js';
 import dotenv from 'dotenv';
-
+import './models/associations.js';
 dotenv.config();
+
 
 const dbName = process.env.DB_NAME;
 const dbUser = process.env.DB_USER;

@@ -1,11 +1,12 @@
 import db from '../config/dbConnect.js';
 import Entity from '../models/Usuario.js';
+import { Sequelize } from 'sequelize';
 import bcrypt from 'bcrypt';
 import { Op } from 'sequelize';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import UsuarioHasModulo from '../models/usuarioHasModulo.js';
 import verifyPassword from '../util/verifyPassword.js';
+import { Usuario, Modulo, UsuarioHasModulo, Efetivo, Unidade, Graduacao } from '../models/associations.js';
 
 dotenv.config()
 
@@ -39,8 +40,27 @@ class UserController {
     const limit = 10;
 
     try {
-
-      const { count, rows: entities } = await Entity.findAndCountAll({
+      const { count, rows: entities } = await Usuario.findAndCountAll({
+        include: [
+          {
+            model: Modulo,
+            through: {
+              model: UsuarioHasModulo,
+              attributes: [],
+            },
+            attributes: ['descricao', 'link', 'icone', 'ordem'],
+          },
+          {
+            model: Efetivo,
+            include: [
+              {
+                model: Graduacao,
+                attributes: ['sigla'],
+              }
+            ],
+            attributes: ['id', 'id_graduacao', 'nome_completo', 'nome_guerra'],
+          }
+        ],
         order: [['id', 'ASC']],
         offset: Number(page * limit - limit),
         limit: limit
@@ -48,9 +68,16 @@ class UserController {
 
       const totalPages = Math.ceil(count / limit);
 
-      entities.forEach(entity => {
-        delete entity.dataValues.senha;
-      });
+      const formattedEntities = entities.map(entity => ({
+        id: entity.id,
+        usuario: entity.usuario,
+        nivel_acesso: entity.nivel_acesso,
+        flag: entity.flag,
+        auth: entity.auth,
+        nome_guerra: entity.Efetivo ? entity.Efetivo.nome_guerra : null,
+        graduacao: entity.Efetivo && entity.Efetivo.Graduacao ? entity.Efetivo.Graduacao.sigla : null,
+        Modulos: entity.Modulos,
+      }));
 
       const pagination = {
         path: '/usuario',
@@ -61,7 +88,7 @@ class UserController {
         totalItems: count
       };
 
-      res.status(200).json({ entities, pagination });
+      res.status(200).json({ entities: formattedEntities, pagination });
     } catch (error) {
       res.status(500).send({ message: `${error.message}` });
     }
@@ -158,7 +185,17 @@ class UserController {
 
       if (entity) {
         delete entity.dataValues.senha;
-        res.status(200).json(entity);
+
+        const modulos = await UsuarioHasModulo.findAll({
+          where: { id_usuario: entity.id },
+          include: [{
+            model: Modulo,
+            attributes: ['id', 'descricao', 'link', 'icone', 'ordem']
+          }],
+          raw: false,
+        });
+
+        res.status(200).json({ entity, modulos });
       } else {
         res.status(400).send({
           message: `Id ${req.params.id} not found!`

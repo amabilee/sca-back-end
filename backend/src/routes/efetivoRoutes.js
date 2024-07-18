@@ -13,6 +13,10 @@ router.get('/efetivo/:id', EfetivoController.getEntityById, () => {
   /* #swagger.tags = ['Efetivo'] */
 });
 
+router.get('/efetivo/consulta/:id', EfetivoController.getEntityBySaram, () => {
+  /* #swagger.tags = ['Efetivo'] */
+});
+
 router.post('/efetivo', EfetivoController.createEntity, () => {
   /* #swagger.tags = ['Efetivo'] */
 });
