@@ -3,7 +3,7 @@ import { Op } from 'sequelize';
 
 class AlertaController {
 	static getAllEntities = async (req, res) => {
-		const { page = 1, nome_alerta, cor } = req.query;
+		const { page = 1, nome_alerta } = req.query;
 		const limit = 10;
 		let lastPage = 1;
 
@@ -12,10 +12,6 @@ class AlertaController {
 
 			if (nome_alerta) {
 				whereCondition.nome_alerta = { [Op.like]: `%${nome_alerta}%` };
-			}
-
-			if (cor) {
-				whereCondition.cor = { [Op.like]: `%${cor}%` };
 			}
 
 			whereCondition.ativo_alerta = { [Op.like]: true };

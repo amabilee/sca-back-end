@@ -1,9 +1,9 @@
-import { Op, Sequelize } from 'sequelize';
+import { Op } from 'sequelize';
 import Entity from '../models/Unidade.js';
 
 class UnidadeController {
 	static getAllEntities = async (req, res) => {
-		const { page = 1, nome } = req.query;
+		const { page, nome } = req.query;
 		const limit = 15;
 
 		try {
@@ -13,26 +13,40 @@ class UnidadeController {
 			}
 
 			whereCondition.ativo_unidade = { [Op.eq]: true }
+			if (page) {
+				const { count, rows: entities } = await Entity.findAndCountAll({
+					where: whereCondition,
+					order: [['id', 'ASC']],
+					offset: Number(page * limit - limit),
+					limit: limit
+				});
 
-			const { count, rows: entities } = await Entity.findAndCountAll({
-				where: whereCondition,
-				order: [['id', 'ASC']],
-				offset: Number(page * limit - limit),
-				limit: limit
-			});
+				const totalPages = Math.ceil(count / limit);
 
-			const totalPages = Math.ceil(count / limit);
+				const pagination = {
+					path: '/unidade',
+					page,
+					prev_page: page - 1 >= 1 ? page - 1 : false,
+					next_page: Number(page) + Number(1) > totalPages ? false : Number(page) + Number(1),
+					totalPages,
+					totalItems: count
+				};
+				res.status(200).json({ entities, pagination });
+			} else {
+				const { count, rows: entities } = await Entity.findAndCountAll({
+					where: whereCondition,
+					order: [['id', 'ASC']],
+				});
 
-			const pagination = {
-				path: '/unidade',
-				page,
-				prev_page: page - 1 >= 1 ? page - 1 : false,
-				next_page: Number(page) + Number(1) > totalPages ? false : Number(page) + Number(1),
-				totalPages,
-				totalItems: count
-			};
+				const totalPages = Math.ceil(count / limit);
 
-			res.status(200).json({ entities, pagination });
+				const pagination = {
+					path: '/unidade',
+					totalItems: count
+				};
+				res.status(200).json({ entities, pagination });
+			}
+
 		} catch (error) {
 			res.status(500).send({ message: `${error.message}` });
 		}

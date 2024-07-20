@@ -2,11 +2,10 @@ import db from '../config/dbConnect.js';
 import Entity from '../models/Usuario.js';
 import { Sequelize } from 'sequelize';
 import bcrypt from 'bcrypt';
-import { Op } from 'sequelize';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import verifyPassword from '../util/verifyPassword.js';
-import { Usuario, Modulo, UsuarioHasModulo, Efetivo, Unidade, Graduacao } from '../models/associations.js';
+import { Usuario, Modulo, UsuarioHasModulo, Efetivo, Graduacao } from '../models/associations.js';
 
 dotenv.config()
 
@@ -36,35 +35,129 @@ class UserController {
   };
 
   static getAllEntities = async (req, res) => {
-    const { page = 1 } = req.query;
+    const { page = 1, nivel_acesso, modulo, nome_guerra } = req.query;
     const limit = 10;
+    let whereCondition = {};
+    let includeConditions = [];
 
     try {
-      const { count, rows: entities } = await Usuario.findAndCountAll({
-        include: [
-          {
-            model: Modulo,
-            through: {
-              model: UsuarioHasModulo,
-              attributes: [],
-            },
-            attributes: ['descricao', 'link', 'icone', 'ordem'],
+      if (nivel_acesso) {
+        whereCondition.nivel_acesso = nivel_acesso;
+      }
+
+      if (modulo) {
+        includeConditions.push({
+          model: Modulo,
+          through: {
+            model: UsuarioHasModulo,
+            attributes: [],
           },
-          {
-            model: Efetivo,
+          where: {
+            descricao: { [Sequelize.Op.like]: `%${modulo}%` }
+          },
+          attributes: ['descricao', 'link', 'icone', 'ordem'],
+          required: true
+        });
+      } else {
+        includeConditions.push({
+          model: Modulo,
+          through: {
+            model: UsuarioHasModulo,
+            attributes: [],
+          },
+          attributes: ['descricao', 'link', 'icone', 'ordem'],
+        });
+      }
+
+      let entities = [];
+      let count = 0;
+
+
+      if (nome_guerra) {
+        const resultByNomeGuerra = await Usuario.findAndCountAll({
+          include: [
+            ...includeConditions,
+            {
+              model: Efetivo,
+              where: {
+                nome_guerra: { [Sequelize.Op.like]: `%${nome_guerra}%` }
+              },
+              include: [
+                {
+                  model: Graduacao,
+                  attributes: ['sigla'],
+                  required: false,
+                }
+              ],
+              attributes: ['id', 'id_graduacao', 'nome_completo', 'nome_guerra'],
+              required: true,
+            }
+          ],
+          where: whereCondition,
+          order: [['id', 'ASC']],
+          offset: Number(page * limit - limit),
+          limit: limit
+        });
+
+        entities = resultByNomeGuerra.rows;
+        count = resultByNomeGuerra.count;
+
+        if (count === 0) {
+          const resultByGraduacaoSigla = await Usuario.findAndCountAll({
             include: [
+              ...includeConditions,
               {
-                model: Graduacao,
-                attributes: ['sigla'],
+                model: Efetivo,
+                include: [
+                  {
+                    model: Graduacao,
+                    where: {
+                      sigla: { [Sequelize.Op.like]: `%${nome_guerra}%` }
+                    },
+                    attributes: ['sigla'],
+                    required: true,
+                  }
+                ],
+                attributes: ['id', 'id_graduacao', 'nome_completo', 'nome_guerra'],
+                required: true,
               }
             ],
-            attributes: ['id', 'id_graduacao', 'nome_completo', 'nome_guerra'],
-          }
-        ],
-        order: [['id', 'ASC']],
-        offset: Number(page * limit - limit),
-        limit: limit
-      });
+            where: whereCondition,
+            order: [['id', 'ASC']],
+            offset: Number(page * limit - limit),
+            limit: limit
+          });
+
+          entities = resultByGraduacaoSigla.rows;
+          count = resultByGraduacaoSigla.count;
+        }
+      } else {
+        const resultAll = await Usuario.findAndCountAll({
+          include: [
+            ...includeConditions,
+            {
+              model: Efetivo,
+              include: [
+                {
+                  model: Graduacao,
+                  attributes: ['sigla'],
+                  required: false,
+                }
+              ],
+              attributes: ['id', 'id_graduacao', 'nome_completo', 'nome_guerra'],
+              required: true,
+            }
+          ],
+          where: whereCondition,
+          order: [['id', 'ASC']],
+          offset: Number(page * limit - limit),
+          limit: limit
+        });
+
+        entities = resultAll.rows;
+        count = resultAll.count;
+      }
+
 
       const totalPages = Math.ceil(count / limit);
 
@@ -93,6 +186,7 @@ class UserController {
       res.status(500).send({ message: `${error.message}` });
     }
   };
+
 
   static createEntity = async (req, res) => {
     const transaction = await db.transaction();
@@ -131,78 +225,59 @@ class UserController {
   };
 
   static updateEntity = async (req, res) => {
+    const transaction = await db.transaction();
+  
     try {
-      const {
-        nome,
-        cpf,
-        usuario,
-        nivel_acesso,
-        ativo_usuario,
-        modulos
-      } = req.body;
-      const entityId = req.params.id;
-
-      const usuarioAlreadyExist = await Entity.findOne({
-        where: {
-          usuario,
-          id: { [Op.not]: entityId }
-        }
-      });
-
-      if (usuarioAlreadyExist) {
-        return res
-          .status(400)
-          .send({ message: `Já existe um perfil com este usuário.` });
-      }
-
-      const [updatedRows] = await Entity.update(
-        {
-          nome,
-          cpf,
-          usuario,
-          nivel_acesso,
-          ativo_usuario,
-          modulos
-        },
-        { where: { id: entityId } }
-      );
-
-      if (updatedRows > 0) {
-        res.status(200).send({ message: 'Entity updated successfully' });
-      } else {
-        res.status(404).send({
+      const entityId = parseInt(req.params.id, 10);
+      const { usuario, nivel_acesso, modulos } = req.body;
+  
+      console.log(`Updating entity with ID: ${entityId}`);
+  
+      const existingUser = await Usuario.findByPk(entityId);
+      if (!existingUser) {
+        return res.status(404).send({
           message: `Id ${entityId} not found!`
         });
       }
-    } catch (error) {
-      res.status(500).send({ message: `${error.message}` });
-    }
-  };
-
-  static getEntityById = async (req, res) => {
-    try {
-      const entity = await Entity.findByPk(req.params.id);
-
-      if (entity) {
-        delete entity.dataValues.senha;
-
-        const modulos = await UsuarioHasModulo.findAll({
-          where: { id_usuario: entity.id },
-          include: [{
-            model: Modulo,
-            attributes: ['id', 'descricao', 'link', 'icone', 'ordem']
-          }],
-          raw: false,
+  
+      const [updatedRows] = await Usuario.update(
+        {
+          usuario,
+          nivel_acesso
+        },
+        { where: { id: entityId }, transaction } 
+      );
+  
+      console.log(`Updated rows: ${updatedRows}`);
+      console.log(modulos);
+  
+      if (modulos && modulos.length > 0) {
+        
+        await UsuarioHasModulo.destroy({ where: { id_usuario: entityId }, transaction });
+  
+        
+        const createPromises = modulos.map(moduloId => {
+          return UsuarioHasModulo.create(
+            {
+              id_usuario: entityId,
+              id_modulo: moduloId
+            },
+            { transaction }
+          );
         });
-
-        res.status(200).json({ entity, modulos });
+  
+        await Promise.all(createPromises);
       } else {
-        res.status(400).send({
-          message: `Id ${req.params.id} not found!`
-        });
+        
+        await UsuarioHasModulo.destroy({ where: { id_usuario: entityId }, transaction });
       }
+  
+      await transaction.commit();
+      res.status(200).send({ message: 'Entity updated successfully' });
     } catch (error) {
-      res.status(500).send({ message: `${error}` });
+
+      await transaction.rollback();
+      res.status(500).send({ message: `${error.message}` });
     }
   };
 
@@ -219,6 +294,45 @@ class UserController {
       }
     } catch (error) {
       res.status(500).send({ message: `${error}` });
+    }
+  };
+
+  static getEntityById = async (req, res) => {
+    try {
+      const entity = await Entity.findAll({
+        where: { id: req.params.id },
+        include: [
+          {
+            model: Modulo,
+            through: {
+              model: UsuarioHasModulo,
+              attributes: [],
+            },
+            attributes: ['descricao', 'link', 'icone', 'ordem'],
+          },
+          {
+            model: Efetivo,
+            include: [
+              {
+                model: Graduacao,
+                attributes: ['sigla'],
+              }
+            ],
+            attributes: ['id', 'id_graduacao', 'nome_completo', 'nome_guerra'],
+          }
+        ],
+        raw: false,
+      });
+
+      res.status(200).json({ entity });
+      if (!entity) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+    }
+    catch (error) {
+      console.error("Erro ao buscar entidade:", error);
+
+      return res.status(500).send({ message: `${error.message}` });
     }
   };
 }

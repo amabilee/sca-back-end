@@ -4,6 +4,8 @@ import UsuarioHasModulo from './UsuarioHasModulo.js';
 import Efetivo from './Efetivo.js';
 import Unidade from './Unidade.js';
 import Graduacao from './Graduacao.js';
+import Alerta from './Alerta.js';
+
 
 Usuario.belongsToMany(Modulo, { through: UsuarioHasModulo, foreignKey: 'id_usuario' });
 Modulo.belongsToMany(Usuario, { through: UsuarioHasModulo, foreignKey: 'id_modulo' });
@@ -13,5 +15,8 @@ Efetivo.belongsTo(Usuario, { foreignKey: 'qrcode_efetivo', targetKey: 'usuario' 
 
 Efetivo.belongsTo(Unidade, { foreignKey: 'id_unidade' });
 Efetivo.belongsTo(Graduacao, { foreignKey: 'id_graduacao' });
+Efetivo.belongsTo(Alerta, { foreignKey: 'id_alerta', as: 'Alerta' });
 
-export { Usuario, Modulo, UsuarioHasModulo, Efetivo, Unidade, Graduacao };
+Alerta.hasMany(Efetivo, { foreignKey: 'id_alerta', as: 'Efetivos' });
+
+export { Usuario, Modulo, UsuarioHasModulo, Efetivo, Unidade, Graduacao, Alerta };

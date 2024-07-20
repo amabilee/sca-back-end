@@ -40,6 +40,21 @@
             "name": "page",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "nivel_acesso",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "modulo",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "nome_guerra",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
@@ -110,8 +125,8 @@
           "200": {
             "description": "OK"
           },
-          "400": {
-            "description": "Bad Request"
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -136,19 +151,10 @@
             "schema": {
               "type": "object",
               "properties": {
-                "nome": {
-                  "example": "any"
-                },
-                "cpf": {
-                  "example": "any"
-                },
                 "usuario": {
                   "example": "any"
                 },
                 "nivel_acesso": {
-                  "example": "any"
-                },
-                "ativo_usuario": {
                   "example": "any"
                 },
                 "modulos": {
@@ -161,9 +167,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
           },
           "404": {
             "description": "Not Found"
@@ -281,22 +284,28 @@
                 "nome_guerra": {
                   "example": "any"
                 },
-                "cpf": {
-                  "example": "any"
-                },
-                "saram": {
-                  "example": "any"
-                },
                 "foto": {
                   "example": "any"
                 },
                 "dependente": {
                   "example": "any"
                 },
+                "id_alerta": {
+                  "example": "any"
+                },
                 "id_unidade": {
                   "example": "any"
                 },
-                "senha": {
+                "qrcode_efetivo": {
+                  "example": "any"
+                },
+                "email": {
+                  "example": "any"
+                },
+                "cnh": {
+                  "example": "any"
+                },
+                "val_cnh": {
                   "example": "any"
                 },
                 "nivel_acesso": {
@@ -378,12 +387,6 @@
                 "nome_guerra": {
                   "example": "any"
                 },
-                "cpf": {
-                  "example": "any"
-                },
-                "saram": {
-                  "example": "any"
-                },
                 "foto": {
                   "example": "any"
                 },
@@ -397,6 +400,18 @@
                   "example": "any"
                 },
                 "qrcode_efetivo": {
+                  "example": "any"
+                },
+                "email": {
+                  "example": "any"
+                },
+                "cnh": {
+                  "example": "any"
+                },
+                "val_cnh": {
+                  "example": "any"
+                },
+                "nivel_acesso": {
                   "example": "any"
                 },
                 "ativo_efetivo": {
@@ -437,6 +452,33 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/efetivo/consulta/{id}": {
+      "get": {
+        "tags": [
+          "Efetivo"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           },
           "404": {
             "description": "Not Found"

@@ -1,46 +1,114 @@
 import Entity from '../models/Efetivo.js';
+import { Sequelize } from 'sequelize';
 import verifyPassword from '../util/verifyPassword.js';
-import bcrypt from 'bcrypt';
 import NoEntityError from '../util/customErrors/NoEntityError.js';
 import jwt from 'jsonwebtoken';
-import QRCode from '../models/QRCode.js';
-import Alerta from '../models/Alerta.js';
 import { Op } from 'sequelize';
+import Graduacao from '../models/Graduacao.js';
+import Unidade from '../models/Unidade.js';
+import Alerta from '../models/Alerta.js';
 
 class EfetivoController {
 
 	static getAllEntities = async (req, res) => {
-		const { page = 1 } = req.query;
+		const { page = 1, qrcode_efetivo, nome_guerra, nome_completo, unidade, graduacao } = req.query;
 		const limit = 10;
-
+		let whereCondition = {};
+		let includeConditions = [{
+			model: Alerta,
+			attributes: ['nome_alerta'],
+			required: false,
+			as: 'Alerta'
+		  }];
+	
 		try {
-
-			const { count, rows: entities } = await Entity.findAndCountAll({
-				order: [['id', 'ASC']],
-				offset: Number(page * limit - limit),
-				limit: limit
+		  if (qrcode_efetivo) {
+			whereCondition.qrcode_efetivo = { [Sequelize.Op.like]: `%${qrcode_efetivo}%` };
+		  }
+	
+		  if (nome_guerra) {
+			whereCondition.nome_guerra = { [Sequelize.Op.like]: `%${nome_guerra}%` };
+		  }
+	
+		  if (nome_completo) {
+			whereCondition.nome_completo = { [Sequelize.Op.like]: `%${nome_completo}%` };
+		  }
+	
+		  if (unidade) {
+			includeConditions.push({
+			  model: Unidade,
+			  where: {
+				nome: { [Sequelize.Op.like]: `%${unidade}%` }
+			  },
+			  attributes: ['nome'],
+			  required: true
 			});
-
-			const totalPages = Math.ceil(count / limit);
-
-			entities.forEach((entity) => {
-				delete entity.dataValues.senha;
+		  } else {
+			includeConditions.push({
+			  model: Unidade,
+			  attributes: ['nome'],
 			});
+		  }
+	
+		  if (graduacao) {
+			includeConditions.push({
+			  model: Graduacao,
+			  where: {
+				sigla: { [Sequelize.Op.like]: `%${graduacao}%` }
+			  },
+			  attributes: ['sigla'],
+			  required: true
+			});
+		  } else {
+			includeConditions.push({
+			  model: Graduacao,
+			  attributes: ['sigla'],
+			});
+		  }
 
-			const pagination = {
-				path: '/efetivo',
-				page,
-				prev_page: page > 1 ? page - 1 : false,
-				next_page: Number(page) + 1 > totalPages ? false : Number(page) + 1,
-				totalPages,
-				totalItems: count,
-			};
+	
+		  const { count, rows: entities } = await Entity.findAndCountAll({
+			where: whereCondition,
+			include: includeConditions,
+			order: [['id', 'ASC']],
+			offset: Number(page * limit - limit),
+			limit: limit
+		  });
 
-			res.status(200).json({ entities, pagination });
+		  console.log(whereCondition)
+	
+		  const totalPages = Math.ceil(count / limit);
+	
+		  const formattedEntities = entities.map(entity => ({
+			id: entity.id,
+			nome_completo: entity.nome_completo,
+			nome_guerra: entity.nome_guerra,
+			qrcode_efetivo: entity.qrcode_efetivo,
+			email: entity.email,
+			cnh: entity.cnh,
+			val_cnh: entity.val_cnh,
+			nivel_acesso: entity.nivel_acesso,
+			ativo_efetivo: entity.ativo_efetivo,
+			sinc_efetivo: entity.sinc_efetivo,
+			alerta: entity.Alerta ? entity.Alerta.nome_alerta : null,
+			unidade: entity.Unidade ? entity.Unidade.nome : null,
+			graduacao: entity.Graduacao ? entity.Graduacao.sigla : null,
+		  }));
+	
+		  const pagination = {
+			path: '/efetivo',
+			page: Number(page),
+			prev_page: page > 1 ? Number(page) - 1 : false,
+			next_page: Number(page) < totalPages ? Number(page) + 1 : false,
+			totalPages,
+			totalItems: count
+		  };
+	
+		  res.status(200).json({ entities: formattedEntities, pagination });
 		} catch (error) {
-			res.status(500).send({ message: `${error.message}` });
+		  res.status(500).send({ message: `${error.message}` });
 		}
-	};
+	  };
 
 	static getEntityById = async (req, res) => {
 		try {
@@ -64,7 +132,7 @@ class EfetivoController {
 			const { qrcode_efetivo } = req.body
 
 			let whereCondition = {}
-			if (qrcode_efetivo){
+			if (qrcode_efetivo) {
 				whereCondition.qrcode_efetivo = { [Op.like]: `%${qrcode_efetivo}%` };
 			}
 			const entity = await Entity.findAll({
@@ -122,13 +190,9 @@ class EfetivoController {
 			res.status(201).json(createdEntity);
 		} catch (error) {
 			if (error.name === 'SequelizeUniqueConstraintError') {
-				if (createdQRCode) await QRCode.destroy({ where: { qrcode: createdQRCode.qrcode } });
-				if (createdAlerta) await Alerta.destroy({ where: { id: createdAlerta.id } });
 
 				return res.status(400).send({ message: 'Valores já cadastrados!' });
 			} else {
-				if (createdQRCode) await QRCode.destroy({ where: { qrcode: createdQRCode.qrcode } });
-				if (createdAlerta) await Alerta.destroy({ where: { id: createdAlerta.id } });
 
 				return res.status(500).send({ message: `${error.message}` });
 			}
@@ -141,13 +205,15 @@ class EfetivoController {
 				id_graduacao,
 				nome_completo,
 				nome_guerra,
-				cpf,
-				saram,
 				foto,
 				dependente,
 				id_alerta,
 				id_unidade,
 				qrcode_efetivo,
+				email,
+				cnh,
+				val_cnh,
+				nivel_acesso,
 				ativo_efetivo,
 				sinc_efetivo
 			} = req.body;
@@ -158,13 +224,15 @@ class EfetivoController {
 					id_graduacao,
 					nome_completo,
 					nome_guerra,
-					cpf,
-					saram,
 					foto,
 					dependente,
 					id_alerta,
 					id_unidade,
 					qrcode_efetivo,
+					email,
+					cnh,
+					val_cnh,
+					nivel_acesso,
 					ativo_efetivo,
 					sinc_efetivo
 				},

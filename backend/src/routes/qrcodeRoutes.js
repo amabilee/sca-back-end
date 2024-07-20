@@ -6,23 +6,18 @@ import authorizationMiddleware from '../middlewares/authorizationMiddleware.js';
 const router = express.Router();
 
 router.get('/qrcode', QRCodeController.getAllEntities, () => {
-  /* #swagger.tags = ['QRCode'] */
-});
+  /* #swagger.tags = ['QRCode'] */});
 
 router.get('/qrcode/:qrcode', QRCodeController.getEntityByQRCode, () => {
-  /* #swagger.tags = ['QRCode'] */
-});
+  /* #swagger.tags = ['QRCode'] */});
 
 router.post('/qrcode', QRCodeController.createEntity, () => {
-  /* #swagger.tags = ['QRCode'] */
-});
+  /* #swagger.tags = ['QRCode'] */});
 
 router.put('/qrcode/:qrcode', QRCodeController.updateEntity, () => {
-  /* #swagger.tags = ['QRCode'] */
-});
+  /* #swagger.tags = ['QRCode'] */});
 
 router.delete('/qrcode/:qrcode', QRCodeController.deleteEntity, () => {
-  /* #swagger.tags = ['QRCode'] */
-});
+  /* #swagger.tags = ['QRCode'] */});
 
 export default router;
