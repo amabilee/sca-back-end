@@ -69,95 +69,49 @@ class UserController {
         });
       }
 
-      let entities = [];
-      let count = 0;
-
-
-      if (nome_guerra) {
-        const resultByNomeGuerra = await Usuario.findAndCountAll({
-          include: [
-            ...includeConditions,
-            {
-              model: Efetivo,
-              where: {
-                nome_guerra: { [Sequelize.Op.like]: `%${nome_guerra}%` }
-              },
-              include: [
-                {
-                  model: Graduacao,
-                  attributes: ['sigla'],
-                  required: false,
-                }
-              ],
-              attributes: ['id', 'id_graduacao', 'nome_completo', 'nome_guerra'],
-              required: true,
-            }
-          ],
-          where: whereCondition,
-          order: [['id', 'ASC']],
-          offset: Number(page * limit - limit),
-          limit: limit
-        });
-
-        entities = resultByNomeGuerra.rows;
-        count = resultByNomeGuerra.count;
-
-        if (count === 0) {
-          const resultByGraduacaoSigla = await Usuario.findAndCountAll({
+      let count = await Usuario.count({
+        include: [
+          ...includeConditions,
+          {
+            model: Efetivo,
+            required: false,
+            where: nome_guerra ? { nome_guerra: { [Sequelize.Op.like]: `%${nome_guerra}%` } } : undefined,
             include: [
-              ...includeConditions,
               {
-                model: Efetivo,
-                include: [
-                  {
-                    model: Graduacao,
-                    where: {
-                      sigla: { [Sequelize.Op.like]: `%${nome_guerra}%` }
-                    },
-                    attributes: ['sigla'],
-                    required: true,
-                  }
-                ],
-                attributes: ['id', 'id_graduacao', 'nome_completo', 'nome_guerra'],
-                required: true,
+                model: Graduacao,
+                attributes: ['sigla'],
+                required: false,
               }
             ],
-            where: whereCondition,
-            order: [['id', 'ASC']],
-            offset: Number(page * limit - limit),
-            limit: limit
-          });
+          }
+        ],
+        where: whereCondition,
+        distinct: true
+      });
 
-          entities = resultByGraduacaoSigla.rows;
-          count = resultByGraduacaoSigla.count;
-        }
-      } else {
-        const resultAll = await Usuario.findAndCountAll({
-          include: [
-            ...includeConditions,
-            {
-              model: Efetivo,
-              include: [
-                {
-                  model: Graduacao,
-                  attributes: ['sigla'],
-                  required: false,
-                }
-              ],
-              attributes: ['id', 'id_graduacao', 'nome_completo', 'nome_guerra'],
-              required: true,
-            }
-          ],
-          where: whereCondition,
-          order: [['id', 'ASC']],
-          offset: Number(page * limit - limit),
-          limit: limit
-        });
-
-        entities = resultAll.rows;
-        count = resultAll.count;
-      }
-
+      const entities = await Usuario.findAll({
+        include: [
+          ...includeConditions,
+          {
+            model: Efetivo,
+            required: false,
+            where: nome_guerra ? { nome_guerra: { [Sequelize.Op.like]: `%${nome_guerra}%` } } : undefined,
+            include: [
+              {
+                model: Graduacao,
+                attributes: ['sigla'],
+                required: false,
+              }
+            ],
+            attributes: ['id', 'id_graduacao', 'nome_completo', 'nome_guerra'],
+          }
+        ],
+        where: whereCondition,
+        order: [['id', 'ASC']],
+        offset: Number(page * limit - limit),
+        limit: limit,
+        distinct: true
+      });
 
       const totalPages = Math.ceil(count / limit);
 
@@ -186,7 +140,6 @@ class UserController {
       res.status(500).send({ message: `${error.message}` });
     }
   };
-
 
   static createEntity = async (req, res) => {
     const transaction = await db.transaction();
@@ -229,9 +182,7 @@ class UserController {
   
     try {
       const entityId = parseInt(req.params.id, 10);
-      const { usuario, nivel_acesso, modulos } = req.body;
-  
-      console.log(`Updating entity with ID: ${entityId}`);
+      const { usuario, nivel_acesso, modulos, senha } = req.body;
   
       const existingUser = await Usuario.findByPk(entityId);
       if (!existingUser) {
@@ -239,23 +190,22 @@ class UserController {
           message: `Id ${entityId} not found!`
         });
       }
+
+      let updatedFields = { usuario, nivel_acesso }; 
   
-      const [updatedRows] = await Usuario.update(
-        {
-          usuario,
-          nivel_acesso
-        },
-        { where: { id: entityId }, transaction } 
-      );
+      if (senha) {
+        const senhaHashed = await bcrypt.hash(senha, 10);
+        updatedFields.senha = senhaHashed;
+      }
   
-      console.log(`Updated rows: ${updatedRows}`);
-      console.log(modulos);
+      const [updatedRows] = await Usuario.update(updatedFields, {
+        where: { id: entityId },
+        transaction
+      });
   
       if (modulos && modulos.length > 0) {
-        
         await UsuarioHasModulo.destroy({ where: { id_usuario: entityId }, transaction });
   
-        
         const createPromises = modulos.map(moduloId => {
           return UsuarioHasModulo.create(
             {
@@ -268,18 +218,17 @@ class UserController {
   
         await Promise.all(createPromises);
       } else {
-        
         await UsuarioHasModulo.destroy({ where: { id_usuario: entityId }, transaction });
       }
   
       await transaction.commit();
       res.status(200).send({ message: 'Entity updated successfully' });
     } catch (error) {
-
       await transaction.rollback();
       res.status(500).send({ message: `${error.message}` });
     }
   };
+  
 
   static deleteEntity = async (req, res) => {
     try {
@@ -330,8 +279,6 @@ class UserController {
       }
     }
     catch (error) {
-      console.error("Erro ao buscar entidade:", error);
-
       return res.status(500).send({ message: `${error.message}` });
     }
   };

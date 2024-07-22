@@ -28,7 +28,8 @@ const Posto = db.define(
 		}
 	},
 	{
-		tableName: 'posto'
+		tableName: 'posto',
+		timestamps: false
 	}
 );
 

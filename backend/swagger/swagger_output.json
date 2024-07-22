@@ -252,6 +252,31 @@
             "name": "page",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "qrcode_efetivo",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "nome_guerra",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "nome_completo",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "unidade",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "graduacao",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
@@ -534,13 +559,6 @@
           "Graduacao"
         ],
         "description": "",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "type": "string"
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -2018,11 +2036,6 @@
           },
           {
             "name": "nome_alerta",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "cor",
             "in": "query",
             "type": "string"
           }

@@ -5,19 +5,15 @@ import authorizationMiddleware from '../middlewares/authorizationMiddleware.js';
 
 const router = express.Router();
 
-router.get('/qrcode', QRCodeController.getAllEntities, () => {
-  /* #swagger.tags = ['QRCode'] */});
 
-router.get('/qrcode/:qrcode', QRCodeController.getEntityByQRCode, () => {
-  /* #swagger.tags = ['QRCode'] */});
+router.get('/qrcode', authenticationMiddleware, authorizationMiddleware({nivel_acesso: 1}), QRCodeController.getAllEntities, () => {/* #swagger.tags = ['QRCode'] */});
 
-router.post('/qrcode', QRCodeController.createEntity, () => {
-  /* #swagger.tags = ['QRCode'] */});
+router.get('/qrcode/:qrcode', authenticationMiddleware, authorizationMiddleware({nivel_acesso: 2}), QRCodeController.getEntityByQRCode, () => {/* #swagger.tags = ['QRCode'] */});
 
-router.put('/qrcode/:qrcode', QRCodeController.updateEntity, () => {
-  /* #swagger.tags = ['QRCode'] */});
+router.post('/qrcode', authenticationMiddleware, authorizationMiddleware({nivel_acesso: 2}), QRCodeController.createEntity, () => {/* #swagger.tags = ['QRCode'] */});
 
-router.delete('/qrcode/:qrcode', QRCodeController.deleteEntity, () => {
-  /* #swagger.tags = ['QRCode'] */});
+router.put('/qrcode/:qrcode', authenticationMiddleware, authorizationMiddleware({nivel_acesso: 2}), QRCodeController.updateEntity, () => {/* #swagger.tags = ['QRCode'] */});
+
+router.delete('/qrcode/:qrcode', authenticationMiddleware, authorizationMiddleware({nivel_acesso: 2}), QRCodeController.deleteEntity, () => {/* #swagger.tags = ['QRCode'] */});
 
 export default router;

@@ -12,7 +12,8 @@ class UnidadeController {
 				whereCondition.nome = { [Op.like]: `%${nome}%` }
 			}
 
-			whereCondition.ativo_unidade = { [Op.eq]: true }
+			whereCondition.ativo_unidade = { [Op.like]: true }
+			
 			if (page) {
 				const { count, rows: entities } = await Entity.findAndCountAll({
 					where: whereCondition,

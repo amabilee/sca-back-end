@@ -1,6 +1,6 @@
 import Alertas from '../models/Alerta.js';
 
-const usuarioSeed = async () => {
+const alertaSeed = async () => {
     const alertasData = [
         { nome_alerta: "Normal", cor: "#238043", ativo_alerta: true },
         { nome_alerta: "Desertor", cor: "#F41A10", ativo_alerta: true },
@@ -28,4 +28,4 @@ const usuarioSeed = async () => {
     }
 };
 
-export default usuarioSeed;
+export default alertaSeed;

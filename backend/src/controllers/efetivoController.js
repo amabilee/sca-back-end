@@ -7,108 +7,250 @@ import { Op } from 'sequelize';
 import Graduacao from '../models/Graduacao.js';
 import Unidade from '../models/Unidade.js';
 import Alerta from '../models/Alerta.js';
+import QRCode from '../models/QRCode.js'
+import Foto from '../models/Foto.js';
+
+import multer from 'multer';
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage }).single('foto');
 
 class EfetivoController {
+
+	static getEntityBySaram = async (req, res) => {
+		try {
+			let whereCondition = {};
+			whereCondition.qrcode_efetivo = { [Op.like]: `%${req.params.id}%` };
+
+			const entity = await Entity.findAll({
+				where: whereCondition,
+				include: [
+					{
+						model: Foto,
+						attributes: ['foto'],
+						required: false
+					},
+					{
+						model: Graduacao,
+						attributes: ['sigla']
+					},
+					{
+						model: Unidade,
+						attributes: ['nome']
+					}
+				]
+			});
+
+			if (entity) {
+				const result = entity.map(e => {
+					const eJson = e.toJSON();
+					if (eJson.fotos && eJson.fotos.length > 0) {
+						eJson.foto = eJson.fotos[0].foto.toString('base64');
+					} else {
+						eJson.foto = null;
+					}
+					delete eJson.fotos;
+					return eJson;
+				});
+
+				return res.status(200).json(result);
+			} else {
+				return res.status(404).send({
+					message: `Entity with id ${req.params.id} not found!`
+				});
+			}
+		} catch (error) {
+			return res.status(500).send({ message: `${error.message}` });
+		}
+	};
+
+	static createEntity = async (req, res) => {
+		const {
+			id_graduacao,
+			nome_completo,
+			nome_guerra,
+			dependente,
+			id_alerta,
+			id_unidade,
+			qrcode_efetivo,
+			email,
+			cnh,
+			val_cnh,
+			nivel_acesso,
+			ativo_efetivo,
+			sinc_efetivo
+		} = req.body;
+
+		const foto = req.file?.buffer;
+
+		try {
+			const existingEntity = await Entity.findOne({ where: { qrcode_efetivo } });
+			if (existingEntity) {
+				return res.status(400).send({ message: 'Efetivo já cadastrado com este QR code!' });
+			} else {
+				let qrCode = await QRCode.findOne({ where: { qrcode: qrcode_efetivo } });
+				if (!qrCode) {
+					qrCode = await QRCode.create({ qrcode: qrcode_efetivo, nivel_acesso: nivel_acesso || 1 });
+				}
+			}
+
+			const createdEntity = await Entity.create({
+				id_graduacao,
+				nome_completo,
+				nome_guerra,
+				dependente,
+				id_alerta,
+				id_unidade,
+				qrcode_efetivo,
+				email,
+				cnh,
+				val_cnh,
+				nivel_acesso,
+				ativo_efetivo,
+				sinc_efetivo
+			});
+
+			if (foto) {
+				await Foto.create({
+					id_efetivo: createdEntity.id,
+					foto: foto,
+					ativo_foto: true,
+					sinc_foto: Date.now()
+				});
+			}
+
+			res.status(201).json(createdEntity);
+		} catch (error) {
+			if (error.name === 'SequelizeUniqueConstraintError') {
+				return res.status(400).send({ message: 'Valores já cadastrados!' });
+			} else {
+				return res.status(500).send({ message: `${error.message}` });
+			}
+		}
+	};
 
 	static getAllEntities = async (req, res) => {
 		const { page = 1, qrcode_efetivo, nome_guerra, nome_completo, unidade, graduacao } = req.query;
 		const limit = 10;
 		let whereCondition = {};
-		let includeConditions = [{
-			model: Alerta,
-			attributes: ['nome_alerta'],
-			required: false,
-			as: 'Alerta'
-		  }];
-	
+		let includeConditions = [
+			{
+				model: Alerta,
+				attributes: ['nome_alerta'],
+				required: false,
+				as: 'Alerta'
+			},
+			{
+				model: Foto,
+				attributes: ['foto'],
+				required: false
+			},
+		];
+
 		try {
-		  if (qrcode_efetivo) {
-			whereCondition.qrcode_efetivo = { [Sequelize.Op.like]: `%${qrcode_efetivo}%` };
-		  }
-	
-		  if (nome_guerra) {
-			whereCondition.nome_guerra = { [Sequelize.Op.like]: `%${nome_guerra}%` };
-		  }
-	
-		  if (nome_completo) {
-			whereCondition.nome_completo = { [Sequelize.Op.like]: `%${nome_completo}%` };
-		  }
-	
-		  if (unidade) {
-			includeConditions.push({
-			  model: Unidade,
-			  where: {
-				nome: { [Sequelize.Op.like]: `%${unidade}%` }
-			  },
-			  attributes: ['nome'],
-			  required: true
-			});
-		  } else {
-			includeConditions.push({
-			  model: Unidade,
-			  attributes: ['nome'],
-			});
-		  }
-	
-		  if (graduacao) {
-			includeConditions.push({
-			  model: Graduacao,
-			  where: {
-				sigla: { [Sequelize.Op.like]: `%${graduacao}%` }
-			  },
-			  attributes: ['sigla'],
-			  required: true
-			});
-		  } else {
-			includeConditions.push({
-			  model: Graduacao,
-			  attributes: ['sigla'],
-			});
-		  }
+			if (qrcode_efetivo) {
+				whereCondition.qrcode_efetivo = { [Sequelize.Op.like]: `%${qrcode_efetivo}%` };
+			}
 
-	
-		  const { count, rows: entities } = await Entity.findAndCountAll({
-			where: whereCondition,
-			include: includeConditions,
-			order: [['id', 'ASC']],
-			offset: Number(page * limit - limit),
-			limit: limit
-		  });
+			if (nome_guerra) {
+				whereCondition.nome_guerra = { [Sequelize.Op.like]: `%${nome_guerra}%` };
+			}
 
-		  console.log(whereCondition)
-	
-		  const totalPages = Math.ceil(count / limit);
-	
-		  const formattedEntities = entities.map(entity => ({
-			id: entity.id,
-			nome_completo: entity.nome_completo,
-			nome_guerra: entity.nome_guerra,
-			qrcode_efetivo: entity.qrcode_efetivo,
-			email: entity.email,
-			cnh: entity.cnh,
-			val_cnh: entity.val_cnh,
-			nivel_acesso: entity.nivel_acesso,
-			ativo_efetivo: entity.ativo_efetivo,
-			sinc_efetivo: entity.sinc_efetivo,
-			alerta: entity.Alerta ? entity.Alerta.nome_alerta : null,
-			unidade: entity.Unidade ? entity.Unidade.nome : null,
-			graduacao: entity.Graduacao ? entity.Graduacao.sigla : null,
-		  }));
-	
-		  const pagination = {
-			path: '/efetivo',
-			page: Number(page),
-			prev_page: page > 1 ? Number(page) - 1 : false,
-			next_page: Number(page) < totalPages ? Number(page) + 1 : false,
-			totalPages,
-			totalItems: count
-		  };
-	
-		  res.status(200).json({ entities: formattedEntities, pagination });
+			if (nome_completo) {
+				whereCondition.nome_completo = { [Sequelize.Op.like]: `%${nome_completo}%` };
+			}
+
+			whereCondition.ativo_efetivo = { [Op.like]: true };
+
+			if (unidade) {
+				includeConditions.push({
+					model: Unidade,
+					where: {
+						nome: { [Sequelize.Op.like]: `%${unidade}%` }
+					},
+					attributes: ['nome'],
+					required: true
+				});
+			} else {
+				includeConditions.push({
+					model: Unidade,
+					attributes: ['nome'],
+				});
+			}
+
+			if (graduacao) {
+				includeConditions.push({
+					model: Graduacao,
+					where: {
+						sigla: { [Sequelize.Op.like]: `%${graduacao}%` }
+					},
+					attributes: ['sigla'],
+					required: true
+				});
+			} else {
+				includeConditions.push({
+					model: Graduacao,
+					attributes: ['sigla'],
+				});
+			}
+			
+
+			const { count, rows: entities } = await Entity.findAndCountAll({
+				where: whereCondition,
+				include: includeConditions,
+				order: [['id', 'ASC']],
+				offset: Number(page * limit - limit),
+				limit: limit
+			});
+
+			const totalPages = Math.ceil(count / limit);
+
+			const formattedEntities = entities.map(entity => {
+				const entityJson = entity.toJSON();
+
+				if (entityJson.Fotos && entityJson.Fotos.length > 0) {
+					entityJson.foto = entityJson.Fotos[0].foto;
+				} else {
+					entityJson.foto = null;
+				}
+
+				delete entityJson.Fotos;
+
+				return {
+					id: entityJson.id,
+					foto: entityJson.foto,
+					nome_completo: entityJson.nome_completo,
+					nome_guerra: entityJson.nome_guerra,
+					qrcode_efetivo: entityJson.qrcode_efetivo,
+					email: entityJson.email,
+					cnh: entityJson.cnh,
+					val_cnh: entityJson.val_cnh,
+					nivel_acesso: entityJson.nivel_acesso,
+					ativo_efetivo: entityJson.ativo_efetivo,
+					sinc_efetivo: entityJson.sinc_efetivo,
+					alerta: entityJson.Alerta ? entityJson.Alerta.nome_alerta : null,
+					unidade: entityJson.Unidade ? entityJson.Unidade.nome : null,
+					graduacao: entityJson.Graduacao ? entityJson.Graduacao.sigla : null,
+					id_alerta: entityJson.id_alerta,
+					id_unidade: entityJson.id_unidade,
+					id_graduacao: entityJson.id_graduacao
+				};
+			});
+
+			const pagination = {
+				path: '/efetivo',
+				page: Number(page),
+				prev_page: page > 1 ? Number(page) - 1 : false,
+				next_page: Number(page) < totalPages ? Number(page) + 1 : false,
+				totalPages,
+				totalItems: count
+			};
+
+			res.status(200).json({ entities: formattedEntities, pagination });
 		} catch (error) {
-		  res.status(500).send({ message: `${error.message}` });
+			res.status(500).send({ message: `${error.message}` });
 		}
-	  };
+	};
 
 	static getEntityById = async (req, res) => {
 		try {
@@ -127,104 +269,19 @@ class EfetivoController {
 		}
 	};
 
-	static getEntityBySaram = async (req, res) => {
-		try {
-			const { qrcode_efetivo } = req.body
-
-			let whereCondition = {}
-			if (qrcode_efetivo) {
-				whereCondition.qrcode_efetivo = { [Op.like]: `%${qrcode_efetivo}%` };
-			}
-			const entity = await Entity.findAll({
-				where: whereCondition,
-			});
-
-			if (entity) {
-				return res.status(200).json(entity);
-			} else {
-				return res.status(404).send({
-					message: `Entity with id ${req.params.id} not found!`
-				});
-			}
-		} catch (error) {
-			return res.status(500).send({ message: `${error.message}` });
-		}
-	};
-
-	static createEntity = async (req, res) => {
-		try {
-			const {
-				id_graduacao,
-				nome_completo,
-				nome_guerra,
-				foto,
-				dependente,
-				id_alerta,
-				id_unidade,
-				qrcode_efetivo,
-				email,
-				cnh,
-				val_cnh,
-				nivel_acesso,
-				ativo_efetivo,
-				sinc_efetivo
-			} = req.body;
-
-			const createdEntity = await Entity.create({
-				id_graduacao,
-				nome_completo,
-				nome_guerra,
-				foto,
-				dependente,
-				id_alerta,
-				id_unidade,
-				qrcode_efetivo,
-				email,
-				cnh,
-				val_cnh,
-				nivel_acesso,
-				ativo_efetivo,
-				sinc_efetivo
-			});
-
-			res.status(201).json(createdEntity);
-		} catch (error) {
-			if (error.name === 'SequelizeUniqueConstraintError') {
-
-				return res.status(400).send({ message: 'Valores já cadastrados!' });
-			} else {
-
-				return res.status(500).send({ message: `${error.message}` });
-			}
-		}
-	};
-
 	static updateEntity = async (req, res) => {
-		try {
-			const {
-				id_graduacao,
-				nome_completo,
-				nome_guerra,
-				foto,
-				dependente,
-				id_alerta,
-				id_unidade,
-				qrcode_efetivo,
-				email,
-				cnh,
-				val_cnh,
-				nivel_acesso,
-				ativo_efetivo,
-				sinc_efetivo
-			} = req.body;
-			const entityId = req.params.id;
+		upload(req, res, async (err) => {
+			if (err instanceof multer.MulterError) {
+				return res.status(500).send({ message: `Multer error: ${err.message}` });
+			} else if (err) {
+				return res.status(500).send({ message: `Error: ${err.message}` });
+			}
 
-			const [updatedRows] = await Entity.update(
-				{
+			try {
+				const {
 					id_graduacao,
 					nome_completo,
 					nome_guerra,
-					foto,
 					dependente,
 					id_alerta,
 					id_unidade,
@@ -235,20 +292,66 @@ class EfetivoController {
 					nivel_acesso,
 					ativo_efetivo,
 					sinc_efetivo
-				},
-				{ where: { id: entityId } }
-			);
+				} = req.body;
+				const entityId = req.params.id;
 
-			if (updatedRows > 0) {
-				res.status(200).send({ message: 'Entity updated successfully' });
-			} else {
-				res.status(404).send({
-					message: `Entity with id ${entityId} not found!`
+				let fotoBuffer = req.file ? req.file.buffer : null;
+				
+				const entity = await Entity.findByPk(entityId, {
+					include: {
+						model: Foto,
+						attributes: ['foto']
+					}
 				});
+
+				if (!entity) {
+					return res.status(404).send({ message: `Entity with id ${entityId} not found!` });
+				}
+
+				// Verificar se a foto foi alterada
+				if (fotoBuffer) {
+					const existingFoto = await Foto.findOne({ where: { id_efetivo: entityId, foto: fotoBuffer } });
+
+					if (!existingFoto) {
+						// Remover a foto antiga se existir
+						if (entity.Fotos && entity.Fotos.length > 0) {
+							await Foto.destroy({ where: { id_efetivo: entityId } });
+						}
+						// Adicionar a nova foto
+						await Foto.create({ id_efetivo: entityId, foto: fotoBuffer });
+					}
+				}
+
+				const [updatedRows] = await Entity.update(
+					{
+						id_graduacao,
+						nome_completo,
+						nome_guerra,
+						dependente,
+						id_alerta,
+						id_unidade,
+						qrcode_efetivo,
+						email,
+						cnh,
+						val_cnh,
+						nivel_acesso,
+						ativo_efetivo,
+						sinc_efetivo
+					},
+					{ where: { id: entityId } }
+				);
+
+				if (updatedRows > 0 || fotoBuffer) {
+					res.status(200).send({ message: 'Entity updated successfully' });
+				} else {
+					res.status(404).send({
+						message: `Não foram feitas alterações!`
+					});
+				}
+			} catch (error) {
+				res.status(500).send({ message: `${error.message}` });
 			}
-		} catch (error) {
-			res.status(500).send({ message: `${error.message}` });
-		}
+		});
 	};
 
 	static deleteEntity = async (req, res) => {
