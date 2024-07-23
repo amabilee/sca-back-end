@@ -254,7 +254,13 @@ class EfetivoController {
 
 	static getEntityById = async (req, res) => {
 		try {
-			const entity = await Entity.findByPk(req.params.id);
+			const entity = await Entity.findOne({
+				where: { id: req.params.id },
+				include: {
+					model: Graduacao,
+					attributes: ['sigla']
+				}
+			});
 
 			if (entity) {
 				delete entity.dataValues.senha;

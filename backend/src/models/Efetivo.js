@@ -1,7 +1,5 @@
 import { DataTypes } from 'sequelize';
 import db from '../config/dbConnect.js';
-import Unidade from './Unidade.js';
-import Graduacao from './Graduacao.js';
 
 const Efetivo = db.define(
     'Efetivo',
@@ -94,8 +92,5 @@ const Efetivo = db.define(
         timestamps: false
     }
 );
-
-Efetivo.belongsTo(Unidade, { foreignKey: 'id_unidade' });
-Efetivo.belongsTo(Graduacao, { foreignKey: 'id_graduacao' });
 
 export default Efetivo;

@@ -159,6 +159,9 @@
                 },
                 "modulos": {
                   "example": "any"
+                },
+                "senha": {
+                  "example": "any"
                 }
               }
             }
@@ -309,9 +312,6 @@
                 "nome_guerra": {
                   "example": "any"
                 },
-                "foto": {
-                  "example": "any"
-                },
                 "dependente": {
                   "example": "any"
                 },
@@ -410,9 +410,6 @@
                   "example": "any"
                 },
                 "nome_guerra": {
-                  "example": "any"
-                },
-                "foto": {
                   "example": "any"
                 },
                 "dependente": {

@@ -14,7 +14,7 @@ const efetivoSeed = async () => {
       email: "lucas@gmail.com",
       cnh: 987654321,
       val_cnh: "2024-09-09",
-      nivel_acesso: null,
+      nivel_acesso: 1,
       ativo_efetivo: true,
       sinc_efetivo: 1,
       qrcode_efetivo: 7654321
@@ -27,7 +27,7 @@ const efetivoSeed = async () => {
       email: "marcos@gmail.com",
       cnh: 123456789,
       val_cnh: "31-12-2024",
-      nivel_acesso: null,
+      nivel_acesso: 1,
       ativo_efetivo: true,
       sinc_efetivo: 1,
       qrcode_efetivo: 1234567

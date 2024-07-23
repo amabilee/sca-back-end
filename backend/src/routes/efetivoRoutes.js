@@ -13,10 +13,9 @@ router.get('/efetivo', authenticationMiddleware, authorizationMiddleware({nivel_
 
 router.get('/efetivo/:id', authenticationMiddleware, authorizationMiddleware({nivel_acesso: 2}), EfetivoController.getEntityById, () => {/* #swagger.tags = ['Efetivo'] */});
 
-router.get('/efetivo/consulta/:id', authenticationMiddleware, authorizationMiddleware({nivel_acesso: 2}), EfetivoController.getEntityBySaram, () => {/* #swagger.tags = ['Efetivo'] */});
+router.get('/efetivo/consulta/:id', EfetivoController.getEntityBySaram, () => {/* #swagger.tags = ['Efetivo'] */});
 
-router.post('/efetivo', upload.single('foto'), authenticationMiddleware, authorizationMiddleware({nivel_acesso: 2}), EfetivoController.createEntity, () => {
-/* #swagger.tags = ['Efetivo'] */});
+router.post('/efetivo', upload.single('foto'), authenticationMiddleware, authorizationMiddleware({nivel_acesso: 2}), EfetivoController.createEntity, () => {/* #swagger.tags = ['Efetivo'] */});
 
 router.post('/efetivoLogin', authenticationMiddleware, authorizationMiddleware({nivel_acesso: 2}), EfetivoController.login, () => {/* #swagger.tags = ['Efetivo'] */});
 
