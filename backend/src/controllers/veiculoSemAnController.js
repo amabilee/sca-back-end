@@ -3,8 +3,6 @@ import Cracha from '../models/Cracha.js';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize';
 
-import { Efetivo, Graduacao } from '../models/associations.js';
-
 class VeiculoSemAnController {
     static getAllEntities = async (req, res) => {
         const { page = 1} = req.query;
@@ -110,7 +108,27 @@ class VeiculoSemAnController {
             }
         }
     };
-    
+
+    static getEntityByPlaca = async (req, res) => {
+        try {
+            let whereCondition = {}
+            whereCondition.placa = { [Op.like]: `%${req.params.id}%`}
+
+            const entity = await Entity.findOne({
+                where: whereCondition
+            });
+
+            if (entity) {
+                return res.status(200).json(entity);
+            } else {
+                return res.status(404).send({
+                    message: `Veiculo placa:${req.params.id} not found!`
+                });
+            }
+        } catch (error) {
+            return res.status(500).send({ message: `${error.message}` });
+        }
+    };
     
 
 

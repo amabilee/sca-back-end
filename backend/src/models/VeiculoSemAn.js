@@ -52,11 +52,11 @@ const VeiculoSemAn = db.define('VeiculoSemAn', {
   timestamps: false
 });
 
-VeiculoSemAn.associate = (models) => {
-  VeiculoSemAn.belongsTo(models.Cracha, {
-    foreignKey: 'cracha',
-    as: 'crachaDetails'
-  });
-};
+// VeiculoSemAn.associate = (models) => {
+//   VeiculoSemAn.belongsTo(models.Cracha, {
+//     foreignKey: 'cracha',
+//     as: 'crachaDetails'
+//   });
+// };
 
 export default VeiculoSemAn;

@@ -40,9 +40,6 @@ class VeiculoController {
 			if (marca) {
 				whereClause.marca = { [Op.like]: `%${marca}%` };
 			}
-			if (militar) {
-				whereClause.id_efetivo = { [Op.like]: `%${militar}%`}
-			}
 
 			includeConditions.push({
 				model: Efetivo,
@@ -60,33 +57,33 @@ class VeiculoController {
 			let entities;
 
 
-			// if (militar) {
-			// 	entities = await Entity.findAll({
-			// 		include: includeConditions,
-			// 		where: {
-			// 			...whereClause,
-			// 			'$Efetivo.nome_guerra$': { [Sequelize.Op.like]: `%${militar}%` }
-			// 		},
-			// 		order: [['id', 'ASC']],
-			// 		offset: Number(page * limit - limit),
-			// 		limit: limit,
-			// 		distinct: true
-			// 	});
+			if (militar) {
+				entities = await Entity.findAll({
+					include: includeConditions,
+					where: {
+						...whereClause,
+						'$Efetivo.nome_guerra$': { [Sequelize.Op.like]: `%${militar}%` }
+					},
+					order: [['id', 'ASC']],
+					offset: Number(page * limit - limit),
+					limit: limit,
+					distinct: true
+				});
 
-			// 	if (entities.length === 0) {
-			// 		entities = await Entity.findAll({
-			// 			include: includeConditions,
-			// 			where: {
-			// 				...whereClause,
-			// 				'$Efetivo.Graduacao.sigla$': { [Sequelize.Op.like]: `%${militar}%` }
-			// 			},
-			// 			order: [['id', 'ASC']],
-			// 			offset: Number(page * limit - limit),
-			// 			limit: limit,
-			// 			distinct: true
-			// 		});
-			// 	}
-			// } else {
+				if (entities.length === 0) {
+					entities = await Entity.findAll({
+						include: includeConditions,
+						where: {
+							...whereClause,
+							'$Efetivo.Graduacao.sigla$': { [Sequelize.Op.like]: `%${militar}%` }
+						},
+						order: [['id', 'ASC']],
+						offset: Number(page * limit - limit),
+						limit: limit,
+						distinct: true
+					});
+				}
+			} else {
 				entities = await Entity.findAll({
 					include: includeConditions,
 					where: whereClause,
@@ -95,7 +92,7 @@ class VeiculoController {
 					limit: limit,
 					distinct: true
 				});
-			// }
+			}
 
 			const count = await Entity.count({
 				include: includeConditions,
@@ -165,7 +162,7 @@ class VeiculoController {
 				ativo_veiculo,
 				sinc_veiculo
 			} = req.body;
-	
+
 			const existingEntity = await Entity.findOne({ where: { qrcode: qrcode } });
 			if (existingEntity) {
 				return res.status(400).send({ message: 'Já existe um veículo cadastrado com este Selo/An!' });
@@ -176,7 +173,7 @@ class VeiculoController {
 					qrcode = newQrCode.qrcode;
 				}
 			}
-	
+
 			const createdEntity = await Entity.create({
 				id_efetivo,
 				qrcode,
@@ -189,7 +186,7 @@ class VeiculoController {
 				ativo_veiculo,
 				sinc_veiculo
 			});
-	
+
 			return res.status(201).json(createdEntity);
 		} catch (error) {
 			if (qrCode) {
@@ -202,7 +199,7 @@ class VeiculoController {
 			}
 		}
 	};
-	
+
 
 	static updateEntity = async (req, res) => {
 		try {

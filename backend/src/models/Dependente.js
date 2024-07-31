@@ -18,6 +18,11 @@ const Depentende = db.define(
 			},
 			allowNull: false
 		},
+		cpf: {
+			type: DataTypes.BIGINT(11),
+			allowNull: false,
+			unique: true
+		},
 		nome: {
 			type: DataTypes.STRING(50),
 			allowNull: false
@@ -26,13 +31,14 @@ const Depentende = db.define(
 			type: DataTypes.STRING(30),
 			allowNull: false
 		},
-		qrcode: {
+		cracha: {
 			type: DataTypes.INTEGER,
 			allowNull: true
 		},
 		ativo_dependente: {
 			type: DataTypes.BOOLEAN,
-			allowNull: false
+			allowNull: false,
+			defaultValue: 1
 		},
 		sinc_dependente: {
 			type: DataTypes.BIGINT,
@@ -40,7 +46,8 @@ const Depentende = db.define(
 		}
 	},
 	{
-		tableName: 'dependente'
+		tableName: 'dependente',
+		timestamps: false
 	}
 );
 

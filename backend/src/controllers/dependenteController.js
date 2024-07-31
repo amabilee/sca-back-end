@@ -3,25 +3,32 @@ import QRCode from '../models/QRCode.js';
 
 class DependenteController {
 	static getAllEntities = async (req, res) => {
-		const { page = 1 } = req.query;
-		const limit = 10;
+		const { page = 1, cpf } = req.query;
+		const limit = 15;
 		let lastPage = 1;
-		const countEntity = await Entity.count();
+		let whereCondition = {};
 
 		try {
-			const entities = await Entity.findAll({
+			if (cpf) {
+				whereCondition.cpf = { [Op.like]: `%${cpf}%` }
+			}
+
+			const { count, rows: entities } = await Entity.findAndCountAll({
+				where: whereCondition,
 				order: [['id', 'ASC']],
 				offset: Number(page * limit - limit),
 				limit: limit
 			});
 
+			const totalPages = Math.ceil(count / limit);
+
 			const pagination = {
-				path: '/dependentes',
+				path: '/dependente',
 				page,
 				prev_page: page - 1 >= 1 ? page - 1 : false,
 				next_page: Number(page) + Number(1) > lastPage ? false : Number(page) + Number(1),
-				lastPage,
-				totalRegisters: countEntity
+				totalPages,
+				totalItems: count
 			};
 			res.status(200).json({ entities, pagination });
 		} catch (error) {
@@ -47,30 +54,26 @@ class DependenteController {
 
 	static createEntity = async (req, res) => {
 		try {
-			const { id_efetivo, nome, parentesco, nivel_acesso, ativo_dependente, sinc_dependente } = req.body;
-			
-			var createdQRCode = await QRCode.create({
-				nivel_acesso,
-				entity: 'dependente'
-			});
+			const {
+				id_efetivo,
+				cpf,
+				nome,
+				parentesco,
+				ativo_dependente,
+				sinc_dependente
+			} = req.body;
 
 			const createdEntity = await Entity.create({
 				id_efetivo,
+				cpf,
 				nome,
 				parentesco,
-				qrcode: createdQRCode.qrcode,
 				ativo_dependente,
 				sinc_dependente
 			});
 			return res.status(201).json(createdEntity);
 		} catch (error) {
-			if (error.name == 'SequelizeUniqueConstraintError') {
-				if(createdQRCode) createdQRCode.destroy();
-				return res.status(400).send({ message: 'Valores já cadastrados!' });
-			} else {
-				if(createdQRCode) createdQRCode.destroy();
-				return res.status(500).send({ message: `${error.message}` });
-			}
+			return res.status(500).send({ message: `${error.message}` });
 		}
 	};
 
