@@ -24,7 +24,7 @@ class UserController {
         return res.status(401).json({ unauthorized: 'Credenciais inválidas' });
       }
 
-      const jwtToken = jwt.sign({ id: entity.id }, process.env.JWT_SECRET_KEY, { expiresIn: '24h' });
+      const jwtToken = jwt.sign({ id: entity.id }, process.env.JWT_SECRET_KEY, { expiresIn: '12h' });
 
       delete entity.dataValues.senha;
 
@@ -35,7 +35,7 @@ class UserController {
   };
 
   static getAllEntities = async (req, res) => {
-    const { page = 1, nivel_acesso, modulo, nome_guerra } = req.query;
+    const { page = 1, nivel_acesso, militar } = req.query;
     const limit = 10;
     let whereCondition = {};
     let includeConditions = [];
@@ -45,71 +45,70 @@ class UserController {
         whereCondition.nivel_acesso = nivel_acesso;
       }
 
-      if (modulo) {
-        includeConditions.push({
-          model: Modulo,
-          through: {
-            model: UsuarioHasModulo,
-            attributes: [],
-          },
+      includeConditions.push({
+        model: Modulo,
+        through: {
+          model: UsuarioHasModulo,
+          attributes: [],
+        },
+        attributes: ['descricao', 'link', 'icone', 'ordem'],
+      });
+
+      includeConditions.push({
+        model: Efetivo,
+        required: true,
+        include: [
+          {
+            model: Graduacao,
+            attributes: ['sigla'],
+            required: true
+          }
+        ],
+        attributes: ['id', 'id_graduacao', 'nome_completo', 'nome_guerra']
+      });
+
+      let entities;
+
+      if (militar) {
+        entities = await Usuario.findAll({
+          include: includeConditions,
           where: {
-            descricao: { [Sequelize.Op.like]: `%${modulo}%` }
+            ...whereCondition,
+            '$Efetivo.nome_guerra$': { [Sequelize.Op.like]: `%${militar}%` }
           },
-          attributes: ['descricao', 'link', 'icone', 'ordem'],
-          required: true
+          order: [['id', 'ASC']],
+          offset: Number(page * limit - limit),
+          limit: limit,
+          distinct: true
         });
+
+        if (entities.length === 0) {
+          entities = await Usuario.findAll({
+            include: includeConditions,
+            where: {
+              ...whereCondition,
+              '$Efetivo.Graduacao.sigla$': { [Sequelize.Op.like]: `%${militar}%` }
+            },
+            order: [['id', 'ASC']],
+            offset: Number(page * limit - limit),
+            limit: limit,
+            distinct: true
+          });
+        }
       } else {
-        includeConditions.push({
-          model: Modulo,
-          through: {
-            model: UsuarioHasModulo,
-            attributes: [],
-          },
-          attributes: ['descricao', 'link', 'icone', 'ordem'],
+        entities = await Usuario.findAll({
+          include: includeConditions,
+          where: whereCondition,
+          order: [['id', 'ASC']],
+          offset: Number(page * limit - limit),
+          limit: limit,
+          distinct: true
         });
       }
 
-      let count = await Usuario.count({
-        include: [
-          ...includeConditions,
-          {
-            model: Efetivo,
-            required: false,
-            where: nome_guerra ? { nome_guerra: { [Sequelize.Op.like]: `%${nome_guerra}%` } } : undefined,
-            include: [
-              {
-                model: Graduacao,
-                attributes: ['sigla'],
-                required: false,
-              }
-            ],
-          }
-        ],
+      const count = await Usuario.count({
+        include: includeConditions,
         where: whereCondition,
-        distinct: true
-      });
-
-      const entities = await Usuario.findAll({
-        include: [
-          ...includeConditions,
-          {
-            model: Efetivo,
-            required: false,
-            where: nome_guerra ? { nome_guerra: { [Sequelize.Op.like]: `%${nome_guerra}%` } } : undefined,
-            include: [
-              {
-                model: Graduacao,
-                attributes: ['sigla'],
-                required: false,
-              }
-            ],
-            attributes: ['id', 'id_graduacao', 'nome_completo', 'nome_guerra'],
-          }
-        ],
-        where: whereCondition,
-        order: [['id', 'ASC']],
-        offset: Number(page * limit - limit),
-        limit: limit,
         distinct: true
       });
 
@@ -179,11 +178,11 @@ class UserController {
 
   static updateEntity = async (req, res) => {
     const transaction = await db.transaction();
-  
+
     try {
       const entityId = parseInt(req.params.id, 10);
       const { usuario, nivel_acesso, modulos, senha } = req.body;
-  
+
       const existingUser = await Usuario.findByPk(entityId);
       if (!existingUser) {
         return res.status(404).send({
@@ -191,21 +190,21 @@ class UserController {
         });
       }
 
-      let updatedFields = { usuario, nivel_acesso }; 
-  
+      let updatedFields = { usuario, nivel_acesso };
+
       if (senha) {
         const senhaHashed = await bcrypt.hash(senha, 10);
         updatedFields.senha = senhaHashed;
       }
-  
+
       const [updatedRows] = await Usuario.update(updatedFields, {
         where: { id: entityId },
         transaction
       });
-  
+
       if (modulos && modulos.length > 0) {
         await UsuarioHasModulo.destroy({ where: { id_usuario: entityId }, transaction });
-  
+
         const createPromises = modulos.map(moduloId => {
           return UsuarioHasModulo.create(
             {
@@ -215,12 +214,12 @@ class UserController {
             { transaction }
           );
         });
-  
+
         await Promise.all(createPromises);
       } else {
         await UsuarioHasModulo.destroy({ where: { id_usuario: entityId }, transaction });
       }
-  
+
       await transaction.commit();
       res.status(200).send({ message: 'Entity updated successfully' });
     } catch (error) {
@@ -228,7 +227,7 @@ class UserController {
       res.status(500).send({ message: `${error.message}` });
     }
   };
-  
+
 
   static deleteEntity = async (req, res) => {
     try {
@@ -248,7 +247,7 @@ class UserController {
 
   static getEntityById = async (req, res) => {
     try {
-      const entity = await Entity.findAll({
+      const entity = await Entity.findOne({
         where: { id: req.params.id },
         include: [
           {
@@ -272,9 +271,11 @@ class UserController {
         ],
         raw: false,
       });
-
-      res.status(200).json({ entity });
-      if (!entity) {
+      
+      if (entity) {
+        delete entity.dataValues.senha
+        res.status(200).json({ entity });
+      } else {
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
     }

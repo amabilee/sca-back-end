@@ -1,69 +1,109 @@
 import Entity from '../models/Veiculo.js';
 import QRCode from '../models/QRCode.js';
-import Graduacao from '../models/Graduacao.js';
-import Efetivo from '../models/Efetivo.js';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize';
 
+import { Efetivo, Graduacao } from '../models/associations.js';
+
 class VeiculoController {
 	static getAllEntities = async (req, res) => {
-		const { page = 1, qrcode, tipo, renavam, ativo_veiculo, cor_veiculo, placa, modelo, marca, nome_guerra, efetivo } = req.query;
+		const { page = 1, qrcode, tipo, renavam, ativo_veiculo, cor_veiculo, placa, modelo, marca, militar } = req.query;
 		const limit = 10;
 		let whereClause = {};
-
-		if (qrcode) {
-			whereClause.qrcode = { [Op.like]: `%${qrcode}%` };
-		}
-		if (tipo) {
-			whereClause.tipo = { [Op.like]: `%${tipo}%` };
-		}
-		if (renavam) {
-			whereClause.renavam = { [Op.like]: `%${renavam}%` };
-		}
-		if (ativo_veiculo) {
-			whereClause.ativo_veiculo = { [Op.like]: true };
-		} else {
-			whereClause.ativo_veiculo = { [Op.like]: false };
-		}
-		if (cor_veiculo) {
-			whereClause.cor_veiculo = { [Op.like]: `%${cor_veiculo}%` };
-		}
-		if (placa) {
-			whereClause.placa = { [Op.like]: `%${placa}%` };
-		}
-		if (modelo) {
-			whereClause.modelo = { [Op.like]: `%${modelo}%` };
-		}
-		if (marca) {
-			whereClause.marca = { [Op.like]: `%${marca}%` };
-		}
-		if (efetivo) {
-			whereClause.id_efetivo = { [Op.like]: `%${efetivo}%` };
-		}
-		console.log(whereClause)
+		let includeConditions = [];
 
 		try {
-			const { count: totalRegisters, rows: entities } = await Entity.findAndCountAll({
-				where: whereClause,
-				include: {
-					model: Efetivo,
-					required: false,
-					where: nome_guerra ? { nome_guerra: { [Sequelize.Op.like]: `%${nome_guerra}%` } } : undefined,
-					include: [
-						{
-							model: Graduacao,
-							attributes: ['sigla'],
-							required: false
-						}
-					],
-					attributes: ['id', 'qrcode_efetivo','id_graduacao', 'nome_guerra'],
-				},
-				order: [['id', 'ASC']],
-				offset: Number(page * limit - limit),
-				limit: limit
+
+			if (qrcode) {
+				whereClause.qrcode = { [Op.like]: `%${qrcode}%` };
+			}
+			if (tipo) {
+				whereClause.tipo = { [Op.like]: `%${tipo}%` };
+			}
+			if (renavam) {
+				whereClause.renavam = { [Op.like]: `%${renavam}%` };
+			}
+			if (ativo_veiculo) {
+				whereClause.ativo_veiculo = { [Op.like]: true };
+			} else {
+				whereClause.ativo_veiculo = { [Op.like]: false };
+			}
+			if (cor_veiculo) {
+				whereClause.cor_veiculo = { [Op.like]: `%${cor_veiculo}%` };
+			}
+			if (placa) {
+				whereClause.placa = { [Op.like]: `%${placa}%` };
+			}
+			if (modelo) {
+				whereClause.modelo = { [Op.like]: `%${modelo}%` };
+			}
+			if (marca) {
+				whereClause.marca = { [Op.like]: `%${marca}%` };
+			}
+			if (militar) {
+				whereClause.id_efetivo = { [Op.like]: `%${militar}%`}
+			}
+
+			includeConditions.push({
+				model: Efetivo,
+				required: true,
+				include: [
+					{
+						model: Graduacao,
+						attributes: ['sigla'],
+						required: true
+					}
+				],
+				attributes: ['id', 'id_graduacao', 'nome_completo', 'nome_guerra']
 			});
 
-			const lastPage = Math.ceil(totalRegisters / limit);
+			let entities;
+
+
+			// if (militar) {
+			// 	entities = await Entity.findAll({
+			// 		include: includeConditions,
+			// 		where: {
+			// 			...whereClause,
+			// 			'$Efetivo.nome_guerra$': { [Sequelize.Op.like]: `%${militar}%` }
+			// 		},
+			// 		order: [['id', 'ASC']],
+			// 		offset: Number(page * limit - limit),
+			// 		limit: limit,
+			// 		distinct: true
+			// 	});
+
+			// 	if (entities.length === 0) {
+			// 		entities = await Entity.findAll({
+			// 			include: includeConditions,
+			// 			where: {
+			// 				...whereClause,
+			// 				'$Efetivo.Graduacao.sigla$': { [Sequelize.Op.like]: `%${militar}%` }
+			// 			},
+			// 			order: [['id', 'ASC']],
+			// 			offset: Number(page * limit - limit),
+			// 			limit: limit,
+			// 			distinct: true
+			// 		});
+			// 	}
+			// } else {
+				entities = await Entity.findAll({
+					include: includeConditions,
+					where: whereClause,
+					order: [['id', 'ASC']],
+					offset: Number(page * limit - limit),
+					limit: limit,
+					distinct: true
+				});
+			// }
+
+			const count = await Entity.count({
+				include: includeConditions,
+				where: whereClause,
+				distinct: true
+			});
+
+			const totalPages = Math.ceil(count / limit);
 
 			const formattedEntities = entities.map(entity => ({
 				id: entity.id,
@@ -75,18 +115,18 @@ class VeiculoController {
 				modelo: entity.modelo,
 				marca: entity.marca,
 				renavam: entity.renavam,
-				ativo_veiculo: entity. ativo_veiculo,
+				ativo_veiculo: entity.ativo_veiculo,
 				nome_guerra: entity.Efetivo ? entity.Efetivo.nome_guerra : null,
 				graduacao: entity.Efetivo && entity.Efetivo.Graduacao ? entity.Efetivo.Graduacao.sigla : null,
-			  }));
+			}));
 
 			const pagination = {
 				path: '/veiculo',
 				page: Number(page),
 				prev_page: page > 1 ? Number(page) - 1 : false,
-				next_page: Number(page) < lastPage ? Number(page) + 1 : false,
-				lastPage,
-				totalRegisters
+				next_page: Number(page) < totalPages ? Number(page) + 1 : false,
+				totalPages,
+				totalItems: count
 			};
 
 			res.status(200).json({ formattedEntities, pagination });
@@ -111,9 +151,9 @@ class VeiculoController {
 	};
 
 	static createEntity = async (req, res) => {
-		let qrCode
+		let qrCode;
 		try {
-			const {
+			let {
 				id_efetivo,
 				qrcode,
 				tipo,
@@ -125,18 +165,18 @@ class VeiculoController {
 				ativo_veiculo,
 				sinc_veiculo
 			} = req.body;
-
-
-			const existingEntity = await Entity.findOne({ where: { qrcode: qrcode } })
+	
+			const existingEntity = await Entity.findOne({ where: { qrcode: qrcode } });
 			if (existingEntity) {
 				return res.status(400).send({ message: 'Já existe um veículo cadastrado com este Selo/An!' });
 			} else {
 				qrCode = await QRCode.findOne({ where: { qrcode: qrcode } });
 				if (!qrCode) {
-					qrcode = await QRCode.create({ qrcode: qrcode, nivel_acesso: 1 })
+					const newQrCode = await QRCode.create({ qrcode: qrcode, nivel_acesso: 1 });
+					qrcode = newQrCode.qrcode;
 				}
 			}
-
+	
 			const createdEntity = await Entity.create({
 				id_efetivo,
 				qrcode,
@@ -149,7 +189,7 @@ class VeiculoController {
 				ativo_veiculo,
 				sinc_veiculo
 			});
-
+	
 			return res.status(201).json(createdEntity);
 		} catch (error) {
 			if (qrCode) {
@@ -162,6 +202,7 @@ class VeiculoController {
 			}
 		}
 	};
+	
 
 	static updateEntity = async (req, res) => {
 		try {

@@ -7,13 +7,6 @@ import dotenv from 'dotenv';
 import './models/associations.js';
 dotenv.config();
 
-
-const dbName = process.env.DB_NAME;
-const dbUser = process.env.DB_USER;
-const dbPassword = process.env.DB_PASSWORD;
-const jwtSecretKey = process.env.JWT_SECRET_KEY;
-const port = process.env.PORT;
-
 try {
     await db.sync();
     console.warn('All models were synchronized successfully.');

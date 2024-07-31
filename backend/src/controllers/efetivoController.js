@@ -193,7 +193,7 @@ class EfetivoController {
 					attributes: ['sigla'],
 				});
 			}
-			
+
 
 			const { count, rows: entities } = await Entity.findAndCountAll({
 				where: whereCondition,
@@ -208,17 +208,8 @@ class EfetivoController {
 			const formattedEntities = entities.map(entity => {
 				const entityJson = entity.toJSON();
 
-				if (entityJson.Fotos && entityJson.Fotos.length > 0) {
-					entityJson.foto = entityJson.Fotos[0].foto;
-				} else {
-					entityJson.foto = null;
-				}
-
-				delete entityJson.Fotos;
-
 				return {
 					id: entityJson.id,
-					foto: entityJson.foto,
 					nome_completo: entityJson.nome_completo,
 					nome_guerra: entityJson.nome_guerra,
 					qrcode_efetivo: entityJson.qrcode_efetivo,
@@ -256,15 +247,49 @@ class EfetivoController {
 		try {
 			const entity = await Entity.findOne({
 				where: { id: req.params.id },
-				include: {
-					model: Graduacao,
-					attributes: ['sigla']
-				}
+				include: [
+					{
+						model: Graduacao,
+						attributes: ['sigla']
+					},
+					{
+						model: Foto,
+						attributes: ['foto'],
+						required: false
+					}
+				]
 			});
 
 			if (entity) {
-				delete entity.dataValues.senha;
-				return res.status(200).json(entity);
+				const entityJson = entity.toJSON();
+				
+				if (entityJson.Fotos && entityJson.Fotos.length > 0) {
+					entityJson.foto = entityJson.Fotos[0].foto;
+				} else {
+					entityJson.foto = null;
+				}
+
+				delete entityJson.Fotos;
+
+				// Format the entity
+				const formattedEntity = {
+					id: entityJson.id,
+					foto: entityJson.foto,
+					nome_completo: entityJson.nome_completo,
+					nome_guerra: entityJson.nome_guerra,
+					qrcode_efetivo: entityJson.qrcode_efetivo,
+					email: entityJson.email,
+					cnh: entityJson.cnh,
+					val_cnh: entityJson.val_cnh,
+					nivel_acesso: entityJson.nivel_acesso,
+					ativo_efetivo: entityJson.ativo_efetivo,
+					sinc_efetivo: entityJson.sinc_efetivo,
+					id_alerta: entityJson.id_alerta,
+					id_unidade: entityJson.id_unidade,
+					id_graduacao: entityJson.id_graduacao
+				};
+
+				return res.status(200).json(formattedEntity); // Return the formatted entity
 			} else {
 				return res.status(404).send({
 					message: `Entity with id ${req.params.id} not found!`
@@ -274,6 +299,7 @@ class EfetivoController {
 			return res.status(500).send({ message: `${error.message}` });
 		}
 	};
+
 
 	static updateEntity = async (req, res) => {
 		upload(req, res, async (err) => {
@@ -302,7 +328,7 @@ class EfetivoController {
 				const entityId = req.params.id;
 
 				let fotoBuffer = req.file ? req.file.buffer : null;
-				
+
 				const entity = await Entity.findByPk(entityId, {
 					include: {
 						model: Foto,
@@ -387,7 +413,7 @@ class EfetivoController {
 				return res.status(401).json({ unauthorized: 'Credenciais inválidas' });
 			}
 
-			const jwtToken = jwt.sign({ id: entity.id }, process.env.JWT_SECRET_KEY, { expiresIn: '24h' });
+			const jwtToken = jwt.sign({ id: entity.id }, process.env.JWT_SECRET_KEY, { expiresIn: '12h' });
 
 			delete entity.dataValues.senha;
 

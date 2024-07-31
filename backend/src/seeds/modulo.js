@@ -10,10 +10,9 @@ const moduloSeed = async () => {
         { descricao: "Postos Serviço", link: "/postos", icone: "posto_icon.svg", ordem: 6 },
         { descricao: "Unidades", link: "/unidades", icone: "unidade_icon.svg", ordem: 7 },
         { descricao: "Veículos", link: "/veiculos", icone: "veiculo_icon.svg", ordem: 8 },
-        { descricao: "Dependentes", link: "/dependentes", icone: "dependente_icon.svg", ordem: 9 },
-        { descricao: "Visitantes", link: "/visitantes", icone: "visitante_icon.svg", ordem: 10 },
-        { descricao: "Crachás", link: "/crachas", icone: "cracha_icon.svg", ordem: 11 },
-        { descricao: "Gerência", link: "/gerencia", icone: "gerencia_icon.svg", ordem: 12 },
+        { descricao: "Pessoas", link: "/pessoas", icone: "pessoa_icon.svg", ordem: 9 },
+        { descricao: "Crachás", link: "/crachas", icone: "cracha_icon.svg", ordem: 10 },
+        { descricao: "Gerência", link: "/gerencia", icone: "gerencia_icon.svg", ordem: 11 },
     ];
 
 

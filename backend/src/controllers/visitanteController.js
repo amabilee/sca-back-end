@@ -126,7 +126,7 @@ class VisitanteController {
 				return res.status(401).json({ unauthorized: 'Credenciais inválidas' });
 			}
 
-			const jwtToken = jwt.sign({ id: entity.id }, process.env.JWT_SECRET_KEY, { expiresIn: '24h' });
+			const jwtToken = jwt.sign({ id: entity.id }, process.env.JWT_SECRET_KEY, { expiresIn: '12h' });
 			delete entity.dataValues.senha;
 
 			return res.status(200).send({ jwtToken, entity });
