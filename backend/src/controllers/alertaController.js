@@ -4,7 +4,7 @@ import { Op } from 'sequelize';
 class AlertaController {
 	static getAllEntities = async (req, res) => {
 		const { page = 1, nome_alerta } = req.query;
-		const limit = 10;
+		const limit = 15;
 		let lastPage = 1;
 
 		try {

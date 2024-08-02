@@ -1,36 +1,49 @@
 import Entity from '../models/Visitante.js';
-import verifyPassword from '../util/verifyPassword.js';
-import NoEntityError from '../util/customErrors/NoEntityError.js';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import QRCode from '../models/QRCode.js';
+import { Op } from 'sequelize';
+
+import multer from 'multer';
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage }).single('foto');
 
 class VisitanteController {
 	static getAllEntities = async (req, res) => {
-		const { page = 1 } = req.query;
-		const limit = 10;
+		const { page = 1, cpf } = req.query;
+		const limit = 15;
 		let lastPage = 1;
-		const countEntity = await Entity.count();
+
+		let whereCondition = {};
 
 		try {
-			const entities = await Entity.findAll({
+
+			if (cpf) {
+				whereCondition.cpf = { [Op.like]: `${cpf}` }
+			}
+
+			const { count, rows: entities } = await Entity.findAndCountAll({
+				where: whereCondition,
 				order: [['id', 'ASC']],
 				offset: Number(page * limit - limit),
 				limit: limit
 			});
 
-			entities.forEach((entity) => {
-				delete entity.dataValues.senha;
-			});
+			if (!cpf) {
+				entities.forEach((entity) => {
+					delete entity.dataValues.foto;
+				});
+			}
+
+			const totalPages = Math.ceil(count / limit);
 
 			const pagination = {
 				path: '/visitante',
 				page,
 				prev_page: page - 1 >= 1 ? page - 1 : false,
 				next_page: Number(page) + Number(1) > lastPage ? false : Number(page) + Number(1),
-				lastPage,
-				totalRegisters: countEntity
+				totalPages,
+				totalItems: count
 			};
+
 			res.status(200).json({ entities, pagination });
 		} catch (error) {
 			res.status(500).send({ message: `${error.message}` });
@@ -55,129 +68,89 @@ class VisitanteController {
 	static createEntity = async (req, res) => {
 		try {
 			const {
-				email,
-				senha,
-				tipo_doc,
-				num_doc,
+				cpf,
 				nome,
 				rua,
 				numero,
 				bairro,
 				estado,
+				complemento,
 				telefone,
-				foto,
 				empresa,
-				autorizador,
-				nivel_acesso,
-				permissionDate,
+				cracha,
 				ativo_visitante,
 				sinc
 			} = req.body;
 
-			const senhaHashed = await bcrypt.hash(senha, 10);
+			const foto = req.file?.buffer;
 
-			var createdQRCode = await QRCode.create({
-				nivel_acesso,
-				entity: 'visitante'
-			})
+			const existingEntity = await Entity.findOne({ where: { cpf } });
+			if (existingEntity) {
+				console.log(existingEntity.dataValues)
+				return res.status(400).send({ message: 'Já existe um visitante cadastrado com este CPF!' });
+			}
 
 			const createdEntity = await Entity.create({
-				email,
-				senha: senhaHashed,
-				tipo_doc,
-				num_doc,
+				cpf,
 				nome,
 				rua,
 				numero,
 				bairro,
 				estado,
+				complemento,
 				telefone,
 				foto,
 				empresa,
-				autorizador,
-				qrcode_visitante: createdQRCode.qrcode,
+				cracha,
 				ativo_visitante,
-				permissionDate,
 				sinc
 			});
-
-			delete createdEntity.dataValues.senha; 
 
 			res.status(201).json(createdEntity);
 		} catch (error) {
 			if (error.name == 'SequelizeUniqueConstraintError') {
-				if(createdQRCode) createdQRCode.destroy();
+				if (createdQRCode) createdQRCode.destroy();
 				res.status(400).send({ message: 'Valores já cadastrados!' });
 			} else {
-				if(createdQRCode) createdQRCode.destroy();
+				if (createdQRCode) createdQRCode.destroy();
 				res.status(500).send({ message: `${error.message}` });
 			}
 		}
 	};
 
-	static login = async (req, res) => {
-		const { email, senha } = req.body;
-		try {
-			const entity = await Entity.findOne({ where: { email } });
-
-			const isPasswordValid = await verifyPassword(entity, senha);
-
-			if (!isPasswordValid) {
-				return res.status(401).json({ unauthorized: 'Credenciais inválidas' });
-			}
-
-			const jwtToken = jwt.sign({ id: entity.id }, process.env.JWT_SECRET_KEY, { expiresIn: '12h' });
-			delete entity.dataValues.senha;
-
-			return res.status(200).send({ jwtToken, entity });
-		} catch (error) {
-			if (error instanceof NoEntityError) {
-				return res.status(400).send({ mensagem: 'Entidade não encontrada!' });
-			}
-			res.status(500).json({ error: error.message });
-		}
-	};
 
 	static updateEntity = async (req, res) => {
 		try {
 			const { id } = req.params;
 			const {
-				email,
-				senha,
-				tipo_doc,
-				num_doc,
+				cpf,
 				nome,
 				rua,
 				numero,
 				bairro,
 				estado,
+				complemento,
 				telefone,
-				foto,
+				// foto,
 				empresa,
-				autorizador,
-				qr_code,
+				cracha,
 				ativo_visitante,
 				sinc
 			} = req.body;
 
-			const senhaHashed = await bcrypt.hash(senha, 10);
-
 			const [updatedRows] = await Entity.update(
 				{
-					email,
-					senha: senhaHashed,
-					tipo_doc,
-					num_doc,
+					cpf,
 					nome,
 					rua,
 					numero,
 					bairro,
 					estado,
+					complemento,
 					telefone,
-					foto,
+					// foto,
 					empresa,
-					autorizador,
-					qr_code,
+					cracha,
 					ativo_visitante,
 					sinc
 				},
@@ -188,7 +161,7 @@ class VisitanteController {
 				res.status(200).send({ message: 'Entity updated successfully' });
 			} else {
 				res.status(400).send({
-					message: `Entity ${id} not found!`
+					message: `Não teve alterações!`
 				});
 			}
 		} catch (error) {

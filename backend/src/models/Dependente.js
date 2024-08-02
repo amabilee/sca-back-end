@@ -1,8 +1,8 @@
 import { DataTypes } from 'sequelize';
 import db from '../config/dbConnect.js';
 
-const Depentende = db.define(
-	'Depentende',
+const Dependente = db.define(
+	'Dependente',
 	{
 		id: {
 			type: DataTypes.INTEGER,
@@ -51,4 +51,4 @@ const Depentende = db.define(
 	}
 );
 
-export default Depentende;
+export default Dependente;

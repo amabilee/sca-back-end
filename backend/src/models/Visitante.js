@@ -10,22 +10,9 @@ const Visitante = db.define(
 			autoIncrement: true,
 			primaryKey: true
 		},
-		email: {
-			type: DataTypes.STRING,
+		cpf: {
+			type: DataTypes.BIGINT(11),
 			allowNull: false,
-			unique: true
-		},
-		senha: {
-			type: DataTypes.STRING(64),
-			allowNull: false
-		},
-		tipo_doc: {
-			type: DataTypes.STRING(30),
-			allowNull: false
-		},
-		num_doc: {
-			type: DataTypes.STRING(20),
-			allowNull: false
 		},
 		nome: {
 			type: DataTypes.STRING(45),
@@ -47,46 +34,83 @@ const Visitante = db.define(
 			type: DataTypes.STRING(20),
 			allowNull: false
 		},
+
+		complemento: {
+			type: DataTypes.STRING(100),
+			allowNull: true,
+			defaultValue: null
+		},
 		telefone: {
 			type: DataTypes.STRING(11),
-			allowNull: true
+			allowNull: true,
+			defaultValue: null
 		},
 		foto: {
-			type: DataTypes.BLOB,
-			allowNull: true
+			type: DataTypes.BLOB('long'),
+			allowNull: true,
+			defaultValue: null
 		},
 		empresa: {
 			type: DataTypes.STRING(45),
-			allowNull: true
+			allowNull: true,
+			defaultValue: null
 		},
-		autorizador: {
-			type: DataTypes.STRING(45),
-			allowNull: true
-		},
-		qrcode_visitante: {
+		cracha: {
 			type: DataTypes.INTEGER,
-			references: {
-				model: 'qrcode',
-				key: 'qrcode'
-			},
-			allowNull: false
+			allowNull: true,
+			defaultValue: null
 		},
 		ativo_visitante: {
 			type: DataTypes.BOOLEAN,
-			allowNull: true
-		},
-		permissionDate: {
-			type: DataTypes.DATE,
-			allowNull: false,
-			defaultValue: DataTypes.NOW
+			allowNull: true,
+			defaultValue: true
 		},
 		sinc: {
 			type: DataTypes.BIGINT,
-			allowNull: true
-		}
+			allowNull: true,
+			defaultValue: null
+		},
+
+
+		// email: {
+		// 	type: DataTypes.STRING,
+		// 	allowNull: false,
+		// 	unique: true
+		// },
+		// senha: {
+		// 	type: DataTypes.STRING(64),
+		// 	allowNull: false
+		// },
+		// tipo_doc: {
+		// 	type: DataTypes.STRING(30),
+		// 	allowNull: false
+		// },
+		// num_doc: {
+		// 	type: DataTypes.STRING(20),
+		// 	allowNull: false
+		// },
+		// autorizador: {
+		// 	type: DataTypes.STRING(45),
+		// 	allowNull: true
+		// },
+		// qrcode_visitante: {
+		// 	type: DataTypes.INTEGER,
+		// 	references: {
+		// 		model: 'qrcode',
+		// 		key: 'qrcode'
+		// 	},
+		// 	allowNull: false
+		// },
+		// permissionDate: {
+		// 	type: DataTypes.DATE,
+		// 	allowNull: false,
+		// 	defaultValue: DataTypes.NOW
+		// },
+		
 	},
 	{
-		tableName: 'visitante'
+		tableName: 'visitante',
+		timestamps: false
 	}
 );
 

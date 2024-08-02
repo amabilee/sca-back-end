@@ -4,7 +4,7 @@ import Efetivo from '../models/Efetivo.js';
 class CartaoVacinaController {
 	static getAllEntities = async (req, res) => {
 		const { page = 1 } = req.query;
-		const limit = 10;
+		const limit = 15;
 		let lastPage = 1;
 		const countEntity = await CartaoVacina.count();
 

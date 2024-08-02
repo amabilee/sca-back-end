@@ -47,12 +47,7 @@
             "type": "string"
           },
           {
-            "name": "modulo",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "nome_guerra",
+            "name": "militar",
             "in": "query",
             "type": "string"
           }
@@ -1555,7 +1550,47 @@
             "type": "string"
           },
           {
-            "name": "filters",
+            "name": "qrcode",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "renavam",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "ativo_veiculo",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "cor_veiculo",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "placa",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "modelo",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "marca",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "militar",
             "in": "query",
             "type": "string"
           }
@@ -1581,10 +1616,10 @@
             "schema": {
               "type": "object",
               "properties": {
-                "nivel_acesso": {
+                "id_efetivo": {
                   "example": "any"
                 },
-                "id_efetivo": {
+                "qrcode": {
                   "example": "any"
                 },
                 "tipo": {
@@ -2190,6 +2225,11 @@
             "name": "page",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "cpf",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
@@ -2216,13 +2256,13 @@
                 "id_efetivo": {
                   "example": "any"
                 },
+                "cpf": {
+                  "example": "any"
+                },
                 "nome": {
                   "example": "any"
                 },
                 "parentesco": {
-                  "example": "any"
-                },
-                "nivel_acesso": {
                   "example": "any"
                 },
                 "ativo_dependente": {
@@ -2238,9 +2278,6 @@
         "responses": {
           "201": {
             "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
           },
           "500": {
             "description": "Internal Server Error"

@@ -6,7 +6,7 @@ import { Sequelize } from 'sequelize';
 class VeiculoSemAnController {
     static getAllEntities = async (req, res) => {
         const { page = 1} = req.query;
-        const limit = 10;
+        const limit = 15;
         let whereClause = {};
         let includeConditions = [];
 
@@ -60,10 +60,9 @@ class VeiculoSemAnController {
     };
 
     static createEntity = async (req, res) => {
-        let cracha
+        // let cracha
         try {
             let {
-                // id_efetivo,
                 tipo,
                 cor_veiculo,
                 placa,
@@ -98,14 +97,7 @@ class VeiculoSemAnController {
     
             return res.status(201).json(createdEntity);
         } catch (error) {
-            if (cracha) {
-                await Cracha.destroy();
-            }
-            if (error.name === 'SequelizeUniqueConstraintError') {
-                return res.status(400).send({ message: 'Valores já cadastrados!' });
-            } else {
-                return res.status(500).send({ message: `${error.message}` });
-            }
+            return res.status(500).send({ message: `${error.message}` });
         }
     };
 

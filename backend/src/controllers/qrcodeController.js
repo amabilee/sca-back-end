@@ -7,7 +7,7 @@ import Efetivo from '../models/Efetivo.js';
 class QRCodeController {
 	static getAllEntities = async (req, res) => {
 		const { page = 1 } = req.query;
-		const limit = 10;
+		const limit = 15;
 		let lastPage = 1;
 
 		try {

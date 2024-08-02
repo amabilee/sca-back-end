@@ -1,24 +1,54 @@
 import Entity from '../models/Dependente.js';
-import QRCode from '../models/QRCode.js';
+import { Op } from 'sequelize';
+
+import { Efetivo, Graduacao } from '../models/associations.js';
 
 class DependenteController {
 	static getAllEntities = async (req, res) => {
+
 		const { page = 1, cpf } = req.query;
 		const limit = 15;
 		let lastPage = 1;
 		let whereCondition = {};
+		let includeConditions = [{
+			model: Efetivo,
+			required: true,
+			include: [
+			  {
+				model: Graduacao,
+				attributes: ['sigla'],
+				required: true
+			  }
+			],
+			attributes: ['id', 'id_graduacao', 'qrcode_efetivo', 'nome_guerra']
+		  }];
 
 		try {
 			if (cpf) {
-				whereCondition.cpf = { [Op.like]: `%${cpf}%` }
+				whereCondition.cpf = { [Op.eq]: `${cpf}` }
 			}
 
 			const { count, rows: entities } = await Entity.findAndCountAll({
 				where: whereCondition,
+				include: includeConditions,
 				order: [['id', 'ASC']],
 				offset: Number(page * limit - limit),
 				limit: limit
 			});
+
+			const formattedEntities = entities.map(entity => ({
+				id: entity.id,
+				id_efetivo: entity.id_efetivo,
+				cpf: entity.cpf,
+				nome: entity.nome,
+				parentesco: entity.parentesco,
+				cracha: entity.cracha,
+				ativo_dependente: entity.ativo_dependente,
+				sinc_dependente: entity.sinc_dependente,
+				nome_guerra: entity.Efetivo ? entity.Efetivo.nome_guerra : null,
+				graduacao: entity.Efetivo && entity.Efetivo.Graduacao ? entity.Efetivo.Graduacao.sigla : null,
+				numero_ordem: entity.Efetivo ? entity.Efetivo.qrcode_efetivo : null
+			  }));
 
 			const totalPages = Math.ceil(count / limit);
 
@@ -30,7 +60,7 @@ class DependenteController {
 				totalPages,
 				totalItems: count
 			};
-			res.status(200).json({ entities, pagination });
+			res.status(200).json({ formattedEntities, pagination });
 		} catch (error) {
 			res.status(500).send({ message: `${error.message}` });
 		}
@@ -63,6 +93,12 @@ class DependenteController {
 				sinc_dependente
 			} = req.body;
 
+			const existingEntity = await Entity.findOne({ where: { cpf } });
+			if (existingEntity) {
+				console.log(existingEntity.dataValues)
+				return res.status(400).send({ message: 'Já existe um dependente cadastrado com este CPF!' });
+			}
+
 			const createdEntity = await Entity.create({
 				id_efetivo,
 				cpf,
@@ -79,7 +115,7 @@ class DependenteController {
 
 	static updateEntity = async (req, res) => {
 		try {
-			const { id_efetivo, nome, parentesco, qrcode, ativo_dependente, sinc_dependente } = req.body;
+			const { id_efetivo, nome, parentesco, cpf, ativo_dependente, sinc_dependente } = req.body;
 			const entityId = req.params.id;
 
 			const [updatedRows] = await Entity.update(
@@ -87,7 +123,7 @@ class DependenteController {
 					id_efetivo,
 					nome,
 					parentesco,
-					qrcode,
+					cpf,
 					ativo_dependente,
 					sinc_dependente
 				},

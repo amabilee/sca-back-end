@@ -8,7 +8,7 @@ import { Efetivo, Graduacao } from '../models/associations.js';
 class VeiculoController {
 	static getAllEntities = async (req, res) => {
 		const { page = 1, qrcode, tipo, renavam, ativo_veiculo, cor_veiculo, placa, modelo, marca, militar } = req.query;
-		const limit = 10;
+		const limit = 15;
 		let whereClause = {};
 		let includeConditions = [];
 

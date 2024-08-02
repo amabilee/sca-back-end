@@ -131,7 +131,7 @@ class EfetivoController {
 
 	static getAllEntities = async (req, res) => {
 		const { page = 1, qrcode_efetivo, nome_guerra, nome_completo, unidade, graduacao } = req.query;
-		const limit = 10;
+		const limit = 15;
 		let whereCondition = {};
 		let includeConditions = [
 			{
