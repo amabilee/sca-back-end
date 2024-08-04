@@ -60,7 +60,7 @@ class VeiculoSemAnController {
     };
 
     static createEntity = async (req, res) => {
-        // let cracha
+        
         try {
             let {
                 tipo,
@@ -77,11 +77,7 @@ class VeiculoSemAnController {
             if (existingEntity) {
                 return res.status(400).send({ message: 'Já existe um veículo cadastrado com esta placa!' });
             }
-    
-            // cracha = await Cracha.create({
-            //     pessoa: 0,
-            //     veiculo: 1
-            // });
+
     
             const createdEntity = await Entity.create({
                 tipo,
@@ -90,7 +86,6 @@ class VeiculoSemAnController {
                 modelo,
                 marca,
                 renavam,
-                // cracha: cracha.numero_cracha,
                 ativo_veiculo,
                 sinc_veiculo
             });

@@ -70,43 +70,6 @@ const Visitante = db.define(
 			allowNull: true,
 			defaultValue: null
 		},
-
-
-		// email: {
-		// 	type: DataTypes.STRING,
-		// 	allowNull: false,
-		// 	unique: true
-		// },
-		// senha: {
-		// 	type: DataTypes.STRING(64),
-		// 	allowNull: false
-		// },
-		// tipo_doc: {
-		// 	type: DataTypes.STRING(30),
-		// 	allowNull: false
-		// },
-		// num_doc: {
-		// 	type: DataTypes.STRING(20),
-		// 	allowNull: false
-		// },
-		// autorizador: {
-		// 	type: DataTypes.STRING(45),
-		// 	allowNull: true
-		// },
-		// qrcode_visitante: {
-		// 	type: DataTypes.INTEGER,
-		// 	references: {
-		// 		model: 'qrcode',
-		// 		key: 'qrcode'
-		// 	},
-		// 	allowNull: false
-		// },
-		// permissionDate: {
-		// 	type: DataTypes.DATE,
-		// 	allowNull: false,
-		// 	defaultValue: DataTypes.NOW
-		// },
-		
 	},
 	{
 		tableName: 'visitante',

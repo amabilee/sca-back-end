@@ -14,7 +14,7 @@ import VeiculoSemAn from '../models/VeiculoSemAn.js';
 class GerenciaController {
     static getAllEntities = async (req, res) => {
         try {
-            // Define an array of models and their configurations for counting
+            
             const modelsToCount = [
                 { model: Usuario, alias: 'usuario' },
                 { model: Cracha, alias: 'cracha' },
@@ -32,7 +32,7 @@ class GerenciaController {
                 { type: 'Caminhoneta', alias: 'caminhoneta' },
             ];
 
-            // Helper function to count entries/exits per day
+            
             const countEntriesAndExits = async (type, condition) => {
                 const results = await RegistroAcesso.findAll({
                     attributes: [
