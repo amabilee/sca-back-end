@@ -7,15 +7,14 @@ import graduacoes from './graduacaoRoutes.js';
 import postos from './postoRoutes.js';
 import qrcodes from './qrcodeRoutes.js';
 import registroAcessos from './registroAcessoRoutes.js';
-import sincronismos from './sincronismoRoutes.js';
 import unidades from './unidadeRoutes.js';
 import veiculos from './veiculoRoutes.js';
 import visitantes from './visitanteRoutes.js';
 import dependentes from './dependenteRoutes.js';
 import alerta from './alertaRoutes.js';
-import cartaovacina from './cartaoVacinaRoutes.js';
 import modulo from './moduloRoutes.js';
 import veiculosSemAn from './veiculoSemAnRoutes.js';
+import gerencia from './gerenciaRoute.js';
 
 const routes = (app) => {
 	const swaggerUiOptions = {
@@ -32,15 +31,14 @@ const routes = (app) => {
 	app.use('/', postos);
 	app.use('/', qrcodes);
 	app.use('/', registroAcessos);
-	app.use('/', sincronismos);
 	app.use('/', unidades);
 	app.use('/', veiculos);
 	app.use('/', visitantes);
 	app.use('/', dependentes);
 	app.use('/', alerta);
-	app.use('/', cartaovacina);
 	app.use('/', modulo);
 	app.use('/', veiculosSemAn);
+	app.use('/', gerencia);
 };
 
 export default routes;

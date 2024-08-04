@@ -1,5 +1,5 @@
 import Entity from '../models/Registro_Acesso.js';
-import { Posto, Dependente, VeiculoSemAn, Cracha, Veiculo, Qrcode, Graduacao, Efetivo } from '../models/associations.js'
+import { Posto, Dependente, VeiculoSemAn, Cracha, Veiculo, Qrcode, Graduacao, Efetivo, Visitante } from '../models/associations.js'
 import { Op } from 'sequelize';
 
 class RegistroAcessoController {
@@ -14,7 +14,7 @@ class RegistroAcessoController {
 			id_posto,
 			pessoa_militar
 		} = req.query;
-		const limit = 15;
+		const limit = 20;
 		let includeConditions = [
 			{
 				model: Posto,
@@ -22,6 +22,10 @@ class RegistroAcessoController {
 			},
 			{
 				model: Dependente,
+				attributes: ['cpf', 'nome']
+			},
+			{
+				model: Visitante,
 				attributes: ['cpf', 'nome']
 			},
 			{
@@ -81,6 +85,20 @@ class RegistroAcessoController {
 						[Op.or]: [
 							{ id_veiculo: { [Op.not]: null } },
 							{ id_veiculo_sem_an: { [Op.not]: null } }
+						]
+					}
+				]
+			};
+		} else {
+			whereCondition = {
+				...whereCondition,
+				[Op.and]: [
+					...(whereCondition[Op.and] || []),
+					{
+						[Op.or]: [
+							{ qrcode: { [Op.not]: null } },
+							{ id_visitante: { [Op.not]: null } },
+							{ id_dependente: { [Op.not]: null } }
 						]
 					}
 				]
@@ -186,6 +204,8 @@ class RegistroAcessoController {
 						[Op.or]: [
 							{ '$Dependente.nome$': { [Op.like]: `%${pessoa_militar}%` } },
 							{ '$Dependente.cpf$': { [Op.like]: `%${pessoa_militar}%` } },
+							{ '$Visitante.nome$': { [Op.like]: `%${pessoa_militar}%` } },
+							{ '$Visitante.cpf$': { [Op.like]: `%${pessoa_militar}%` } },
 							{ '$EfetivoQrcode.Efetivo.Graduacao.sigla$': { [Op.like]: `%${pessoa_militar}%` } },
 							{ '$EfetivoQrcode.Efetivo.nome_guerra$': { [Op.like]: `%${pessoa_militar}%` } },
 						]
@@ -242,27 +262,20 @@ class RegistroAcessoController {
 				data,
 				hora,
 
-				posto,
-				// id_posto,
+				posto,// id_posto,
 
 				qrcode,
 
-				// cracha_pessoa
-				cracha_pessoa_numero,
-
-				// cracha_veiculo,
-				cracha_veiculo_numero,
-
-				id_visitante,
-
-				cpf_dependente,
-				// id_dependente,
+				cracha_pessoa_numero, // cracha_pessoa
+				cracha_veiculo_numero, // cracha_veiculo,
+				cpf_visitante, //id_visitante
+				cpf_dependente, // id_dependente,
 
 				id_veiculo,
 
-				placa_veiculo_sem_an,
-				// id_veiculo_sem_an,
+				placa_veiculo_sem_an,// id_veiculo_sem_an,
 				autorizador,
+				qrcode_autorizador,
 				sentinela,
 				sinc_acesso,
 				device,
@@ -287,6 +300,16 @@ class RegistroAcessoController {
 				}
 			}
 
+			let id_visitanteCollected
+			if (cpf_visitante) {
+				const visitanteInfo = await Visitante.findOne({ where: { cpf: cpf_visitante } })
+				if (visitanteInfo) {
+					id_visitanteCollected = visitanteInfo.dataValues.id
+				} else {
+					return res.status(400).send({ message: 'Não foi encontrado um visitante com este CPF!' });
+				}
+			}
+
 			let id_veiculo_sem_anCollected
 			if (placa_veiculo_sem_an) {
 
@@ -307,7 +330,7 @@ class RegistroAcessoController {
 				}
 			}
 
-			if (cpf_dependente || id_visitante) {
+			if (cpf_dependente || cpf_visitante) {
 				const cracha_pessoaInfo = await Cracha.findOne({ where: { numero_cracha: cracha_pessoa_numero, pessoa: 1 } })
 				if (!cracha_pessoaInfo) {
 					await Cracha.create({
@@ -318,6 +341,26 @@ class RegistroAcessoController {
 				}
 			}
 
+			let autorizadorSearch;
+			if (qrcode_autorizador) {
+				const autorizadorInfo = await Efetivo.findOne({
+					where: { qrcode_efetivo: qrcode_autorizador },
+				});
+
+				if (autorizadorInfo) {
+					let graduacaoId = autorizadorInfo.dataValues.id_graduacao;
+					let graduacaoFromAutorizador = await Graduacao.findOne({
+						where: { id: graduacaoId },
+					});
+					if (graduacaoFromAutorizador) {
+						autorizadorSearch = `${graduacaoFromAutorizador.dataValues.sigla} ${autorizadorInfo.dataValues.nome_guerra}`;
+					} else {
+						return res.status(400).send({ message: "Graduação não encontrada para o autorizador." });
+					}
+				} else {
+					return res.status(400).send({ message: "Não foi encontrado um visitante com este CPF!" });
+				}
+			}
 
 
 			const createdEntity = await Entity.create({
@@ -329,11 +372,11 @@ class RegistroAcessoController {
 				qrcode,
 				cracha_pessoa: cracha_pessoa_numero ? cracha_pessoa_numero : null,
 				cracha_veiculo: cracha_veiculo_numero ? cracha_veiculo_numero : null,
-				id_visitante,
+				id_visitante: id_visitanteCollected ? id_visitanteCollected : null,
 				id_dependente: id_dependenteCollected ? id_dependenteCollected : null,
 				id_veiculo,
 				id_veiculo_sem_an: id_veiculo_sem_anCollected ? id_veiculo_sem_anCollected : null,
-				autorizador,
+				autorizador: qrcode_autorizador ? autorizadorSearch : autorizador ? autorizador : null,
 				sentinela,
 
 				sinc_acesso,
