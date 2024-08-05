@@ -1024,6 +1024,41 @@
             "name": "page",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "modalidade",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "placa",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "data",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "sentinela_autorizador",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "id_posto",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "pessoa_militar",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
@@ -1056,28 +1091,46 @@
                 "hora": {
                   "example": "any"
                 },
-                "id_posto": {
+                "posto": {
                   "example": "any"
                 },
                 "qrcode": {
                   "example": "any"
                 },
-                "id_efetivo": {
+                "cracha_pessoa_numero": {
                   "example": "any"
                 },
-                "id_visitante": {
+                "cracha_veiculo_numero": {
                   "example": "any"
                 },
-                "id_dependente": {
+                "cpf_visitante": {
+                  "example": "any"
+                },
+                "cpf_dependente": {
                   "example": "any"
                 },
                 "id_veiculo": {
                   "example": "any"
                 },
+                "placa_veiculo_sem_an": {
+                  "example": "any"
+                },
                 "autorizador": {
                   "example": "any"
                 },
+                "qrcode_autorizador": {
+                  "example": "any"
+                },
+                "sentinela": {
+                  "example": "any"
+                },
                 "sinc_acesso": {
+                  "example": "any"
+                },
+                "device": {
+                  "example": "any"
+                },
+                "detalhe": {
                   "example": "any"
                 }
               }
@@ -1790,6 +1843,11 @@
             "name": "page",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "cpf",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
@@ -1813,16 +1871,7 @@
             "schema": {
               "type": "object",
               "properties": {
-                "email": {
-                  "example": "any"
-                },
-                "senha": {
-                  "example": "any"
-                },
-                "tipo_doc": {
-                  "example": "any"
-                },
-                "num_doc": {
+                "cpf": {
                   "example": "any"
                 },
                 "nome": {
@@ -1840,22 +1889,16 @@
                 "estado": {
                   "example": "any"
                 },
-                "telefone": {
+                "complemento": {
                   "example": "any"
                 },
-                "foto": {
+                "telefone": {
                   "example": "any"
                 },
                 "empresa": {
                   "example": "any"
                 },
-                "autorizador": {
-                  "example": "any"
-                },
-                "nivel_acesso": {
-                  "example": "any"
-                },
-                "permissionDate": {
+                "cracha": {
                   "example": "any"
                 },
                 "ativo_visitante": {
@@ -1925,16 +1968,7 @@
             "schema": {
               "type": "object",
               "properties": {
-                "email": {
-                  "example": "any"
-                },
-                "senha": {
-                  "example": "any"
-                },
-                "tipo_doc": {
-                  "example": "any"
-                },
-                "num_doc": {
+                "cpf": {
                   "example": "any"
                 },
                 "nome": {
@@ -1952,19 +1986,16 @@
                 "estado": {
                   "example": "any"
                 },
-                "telefone": {
+                "complemento": {
                   "example": "any"
                 },
-                "foto": {
+                "telefone": {
                   "example": "any"
                 },
                 "empresa": {
                   "example": "any"
                 },
-                "autorizador": {
-                  "example": "any"
-                },
-                "qr_code": {
+                "cracha": {
                   "example": "any"
                 },
                 "ativo_visitante": {
@@ -2008,45 +2039,6 @@
           },
           "400": {
             "description": "Bad Request"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/visitanteLogin": {
-      "post": {
-        "tags": [
-          "Visitante"
-        ],
-        "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "email": {
-                  "example": "any"
-                },
-                "senha": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Unauthorized"
           },
           "500": {
             "description": "Internal Server Error"
@@ -2279,6 +2271,9 @@
           "201": {
             "description": "Created"
           },
+          "400": {
+            "description": "Bad Request"
+          },
           "500": {
             "description": "Internal Server Error"
           }
@@ -2338,7 +2333,7 @@
                 "parentesco": {
                   "example": "any"
                 },
-                "qrcode": {
+                "cpf": {
                   "example": "any"
                 },
                 "ativo_dependente": {

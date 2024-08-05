@@ -108,13 +108,8 @@ class VisitanteController {
 
 			res.status(201).json(createdEntity);
 		} catch (error) {
-			if (error.name == 'SequelizeUniqueConstraintError') {
-				if (createdQRCode) createdQRCode.destroy();
-				res.status(400).send({ message: 'Valores já cadastrados!' });
-			} else {
-				if (createdQRCode) createdQRCode.destroy();
-				res.status(500).send({ message: `${error.message}` });
-			}
+
+			res.status(500).send({ message: `${error.message}` });
 		}
 	};
 
