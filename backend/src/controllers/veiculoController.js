@@ -1,17 +1,18 @@
 import Entity from '../models/Veiculo.js';
 import QRCode from '../models/QRCode.js';
-import { Op } from 'sequelize';
+import { Op, where } from 'sequelize';
 import { Sequelize } from 'sequelize';
 
 import { Efetivo, Graduacao } from '../models/associations.js';
 
 class VeiculoController {
-	static getAllEntities = async (req, res) => {
-		const { page = 1, qrcode, tipo, renavam, ativo_veiculo, cor_veiculo, placa, modelo, marca, militar } = req.query;
-		const limit = 15;
-		let whereClause = {};
-		let includeConditions = [];
 
+	static getAllEntities = async (req, res) => {
+		const { page = 1, qrcode, tipo, renavam, ativo_veiculo, cor_veiculo, placa, modelo, marca, militar, efetivo } = req.query;
+		const limit = 15;
+		let whereClause = [];
+		let includeConditions = [];
+		console.log(1)
 		try {
 
 			if (qrcode) {
@@ -20,14 +21,17 @@ class VeiculoController {
 			if (tipo) {
 				whereClause.tipo = { [Op.like]: `%${tipo}%` };
 			}
+
 			if (renavam) {
 				whereClause.renavam = { [Op.like]: `%${renavam}%` };
 			}
+
 			if (ativo_veiculo) {
 				whereClause.ativo_veiculo = { [Op.like]: true };
 			} else {
 				whereClause.ativo_veiculo = { [Op.like]: false };
 			}
+
 			if (cor_veiculo) {
 				whereClause.cor_veiculo = { [Op.like]: `%${cor_veiculo}%` };
 			}
@@ -37,9 +41,23 @@ class VeiculoController {
 			if (modelo) {
 				whereClause.modelo = { [Op.like]: `%${modelo}%` };
 			}
+
 			if (marca) {
 				whereClause.marca = { [Op.like]: `%${marca}%` };
 			}
+
+			if (efetivo) {
+				whereClause = {
+					...whereClause,
+					[Op.and]: [
+						...(whereClause[Op.and] || []),
+						{
+							id_efetivo: { [Op.like]: `%${efetivo}%` }
+						}
+					]
+				};
+			}
+
 
 			includeConditions.push({
 				model: Efetivo,
@@ -54,8 +72,8 @@ class VeiculoController {
 				attributes: ['id', 'id_graduacao', 'nome_completo', 'nome_guerra']
 			});
 
-			let entities;
 
+			let entities;
 
 			if (militar) {
 				entities = await Entity.findAll({

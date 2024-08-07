@@ -228,7 +228,6 @@ class UserController {
     }
   };
 
-
   static deleteEntity = async (req, res) => {
     try {
       const entity = await Entity.findByPk(req.params.id);
