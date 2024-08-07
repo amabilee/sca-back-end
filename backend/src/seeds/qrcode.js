@@ -4,7 +4,6 @@ const qrcodeSeed = async () => {
     const qrcodesData = [
         { qrcode: 1234567, nivel_acesso: 1 },
         { qrcode: 7654321, nivel_acesso: 1 },
-        { qrcode: 1357924, nivel_acesso: 1 },
         { qrcode: 12345, nivel_acesso: 2 },
         { qrcode: 54321, nivel_acesso: 2 },
     ];

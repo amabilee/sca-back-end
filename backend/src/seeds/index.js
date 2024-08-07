@@ -17,8 +17,8 @@ const seed = async () => {
 	await efetivoSeed();
 
 	//Usuario
-	await usuarioSeed();
 	await moduloSeed();
+	await usuarioSeed();
 
 	//Registro
 	await postoSeed();
