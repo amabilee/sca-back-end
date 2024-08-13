@@ -1618,7 +1618,7 @@
             "type": "string"
           },
           {
-            "name": "ativo_veiculo",
+            "name": "ativo",
             "in": "query",
             "type": "string"
           },

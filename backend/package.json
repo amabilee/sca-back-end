@@ -5,7 +5,7 @@
 	"license": "MIT",
 	"scripts": {
 		"dev": "./run.sh",
-		"start": "node ./swagger/swagger.js && node ./src/server.js"
+		"start": "node ./swagger/swagger.js && nodemon ./src/server.js"
 	},
 	"prettier": {
 		"tabWidth": 4,

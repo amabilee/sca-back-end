@@ -1,6 +1,6 @@
 import Entity from '../models/Veiculo.js';
 import QRCode from '../models/QRCode.js';
-import { Op, where } from 'sequelize';
+import { BOOLEAN, Op, where } from 'sequelize';
 import { Sequelize } from 'sequelize';
 
 import { Efetivo, Graduacao } from '../models/associations.js';
@@ -8,11 +8,10 @@ import { Efetivo, Graduacao } from '../models/associations.js';
 class VeiculoController {
 
 	static getAllEntities = async (req, res) => {
-		const { page = 1, qrcode, tipo, renavam, ativo_veiculo, cor_veiculo, placa, modelo, marca, militar, efetivo } = req.query;
+		const { page = 1, qrcode, tipo, renavam, ativo, inativo, cor_veiculo, placa, modelo, marca, militar, efetivo } = req.query;
 		const limit = 15;
-		let whereClause = [];
+		let whereClause = {};
 		let includeConditions = [];
-		console.log(1)
 		try {
 
 			if (qrcode) {
@@ -26,10 +25,12 @@ class VeiculoController {
 				whereClause.renavam = { [Op.like]: `%${renavam}%` };
 			}
 
-			if (ativo_veiculo) {
-				whereClause.ativo_veiculo = { [Op.like]: true };
-			} else {
-				whereClause.ativo_veiculo = { [Op.like]: false };
+			if (ativo) {
+				whereClause.ativo_veiculo = { [Op.like]: true} ;
+			} 
+
+			if (inativo) {
+				whereClause.ativo_veiculo = { [Op.like]: false} ;
 			}
 
 			if (cor_veiculo) {
@@ -75,6 +76,7 @@ class VeiculoController {
 
 			let entities;
 
+			console.log(whereClause)
 			if (militar) {
 				entities = await Entity.findAll({
 					include: includeConditions,
