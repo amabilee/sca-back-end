@@ -1623,6 +1623,11 @@
             "type": "string"
           },
           {
+            "name": "inativo",
+            "in": "query",
+            "type": "string"
+          },
+          {
             "name": "cor_veiculo",
             "in": "query",
             "type": "string"

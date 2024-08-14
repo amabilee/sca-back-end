@@ -80,12 +80,13 @@ class EfetivoController {
 			ativo_efetivo,
 			sinc_efetivo
 		} = req.body;
-
+		
 		const foto = req.file?.buffer;
 
 		try {
-			const existingEntity = await Entity.findOne({ where: { qrcode_efetivo } });
+			const existingEntity = await Entity.findOne({ where: { qrcode_efetivo: qrcode_efetivo } });
 			if (existingEntity) {
+				console.log(existingEntity)
 				return res.status(400).send({ message: 'Efetivo já cadastrado com este QR code!' });
 			} else {
 				let qrCode = await QRCode.findOne({ where: { qrcode: qrcode_efetivo } });
@@ -94,21 +95,40 @@ class EfetivoController {
 				}
 			}
 
-			const createdEntity = await Entity.create({
-				id_graduacao,
-				nome_completo,
-				nome_guerra,
-				dependente,
-				id_alerta,
-				id_unidade,
-				qrcode_efetivo,
-				email,
-				cnh,
-				val_cnh,
-				nivel_acesso,
-				ativo_efetivo,
-				sinc_efetivo
-			});
+			let createdEntity
+			if (val_cnh == null || cnh == null || cnh == 0){
+				createdEntity = await Entity.create({
+					id_graduacao,
+					nome_completo,
+					nome_guerra,
+					dependente,
+					id_alerta,
+					id_unidade,
+					qrcode_efetivo,
+					email,
+					nivel_acesso,
+					ativo_efetivo,
+					sinc_efetivo
+				});
+			} else {
+				createdEntity = await Entity.create({
+					id_graduacao,
+					nome_completo,
+					nome_guerra,
+					dependente,
+					id_alerta,
+					id_unidade,
+					qrcode_efetivo,
+					email,
+					cnh: cnh != 0 ? cnh : null ,
+					val_cnh: val_cnh != null ? val_cnh : null,
+					nivel_acesso,
+					ativo_efetivo,
+					sinc_efetivo
+				});	
+			}
+
+		 
 
 			if (foto) {
 				await Foto.create({
@@ -121,6 +141,7 @@ class EfetivoController {
 
 			res.status(201).json(createdEntity);
 		} catch (error) {
+			await QRCode.destroy({ where: { qrcode: qrcode_efetivo } });
 			if (error.name === 'SequelizeUniqueConstraintError') {
 				return res.status(400).send({ message: 'Valores já cadastrados!' });
 			} else {
