@@ -123,38 +123,31 @@ class RegistroAcessoController {
 
 		if (data) {
 			const [startDateTime, endDateTime] = data.split(',');
-			const startDate = new Date(startDateTime.replace(/%20/g, ' '));
-			const endDate = new Date(endDateTime.replace(/%20/g, ' '));
-
-			if (!isNaN(startDate) && !isNaN(endDate)) {
-				whereCondition = {
-					...whereCondition,
-					[Op.and]: [
-						...(whereCondition[Op.and] || []),
-						{
-							[Op.and]: [
-								{
-									data: {
-										[Op.between]: [
-											startDate.toISOString().split('T')[0],
-											endDate.toISOString().split('T')[0],
-										],
-									},
-								},
-								{
-									hora: {
-										[Op.between]: [
-											startDate.toTimeString().split(' ')[0],
-											endDate.toTimeString().split(' ')[0],
-										],
-									},
-								},
-							],
-						},
-					],
-				};
-			}
+			
+			var startDateTimeCombined = startDateTime.replace('%20', ' ');
+			var endDateTimeCombined = endDateTime.replace('%20', ' ');
+		
+			whereCondition = {
+				...whereCondition,
+				[Op.and]: [
+					...(whereCondition[Op.and] || []),
+					{
+						[Op.and]: [
+							{ data: { [Op.gte]: startDateTimeCombined.split(' ')[0] } },
+							{ hora: { [Op.gte]: startDateTimeCombined.split(' ')[1] } }
+						]
+					},
+					{
+						[Op.and]: [
+							{ data: { [Op.lte]: endDateTimeCombined.split(' ')[0] } },
+							{ hora: { [Op.lte]: endDateTimeCombined.split(' ')[1] } }
+						]
+					}
+				]
+			};
+		
 		}
+		
 
 		if (tipo) {
 			whereCondition = {
@@ -323,18 +316,18 @@ class RegistroAcessoController {
 				const cracha_veiculoInfo = await Cracha.findOne({ where: { numero_cracha: cracha_veiculo_numero, veiculo: 1 } })
 				if (!cracha_veiculoInfo) {
 					await Cracha.create({
-						numero_cracha: cracha_veiculo_numero,
+						numero_cracha: Number(cracha_veiculo_numero),
 						pessoa: 0,
 						veiculo: 1
 					})
 				}
 			}
 
-			if (cpf_dependente || cpf_visitante) {
+			if (cpf_dependente || cpf_visitante || cracha_pessoa_numero) {
 				const cracha_pessoaInfo = await Cracha.findOne({ where: { numero_cracha: cracha_pessoa_numero, pessoa: 1 } })
 				if (!cracha_pessoaInfo) {
 					await Cracha.create({
-						numero_cracha: cracha_pessoa_numero,
+						numero_cracha: Number(cracha_pessoa_numero),
 						pessoa: 1,
 						veiculo: 0
 					})
@@ -385,6 +378,7 @@ class RegistroAcessoController {
 			});
 			res.status(201).json(createdEntity);
 		} catch (error) {
+			console.log(error)
 			if (error.name == 'SequelizeUniqueConstraintError') {
 				res.status(400).send({ message: 'Valores já cadastrados!' });
 			} else {

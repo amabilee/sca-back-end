@@ -35,6 +35,8 @@ npm run start
 ```
 
 ## How to access Swagger documentation
-> Now with the server running, open the browser and go to http://localhost:3000/doc/. 
+> Now with the server running, open the browser and go to http://localhost:3100/doc/. 
 > There you can find all the endpoints, the params, and all you need to know about the api.
 
+## Authors
+Amábile Zucchetti - https://github.com/amabilee
