@@ -80,14 +80,17 @@ class EfetivoController {
 			ativo_efetivo,
 			sinc_efetivo
 		} = req.body;
-		
+
 		const foto = req.file?.buffer;
 
 		try {
 			const existingEntity = await Entity.findOne({ where: { qrcode_efetivo: qrcode_efetivo } });
 			if (existingEntity) {
-				console.log(existingEntity)
-				return res.status(400).send({ message: 'Efetivo já cadastrado com este QR code!' });
+				if (existingEntity.dataValues.ativo_efetivo) {
+					return res.status(400).send({ message: 'Efetivo desativado, entre em contato com os desenvolvedores.' });
+				} else {
+					return res.status(400).send({ message: 'Efetivo já cadastrado com este QR code.' });
+				}
 			} else {
 				let qrCode = await QRCode.findOne({ where: { qrcode: qrcode_efetivo } });
 				if (!qrCode) {
@@ -96,7 +99,7 @@ class EfetivoController {
 			}
 
 			let createdEntity
-			if (val_cnh == null || cnh == null || cnh == 0){
+			if (val_cnh == null || cnh == null || cnh == 0) {
 				createdEntity = await Entity.create({
 					id_graduacao,
 					nome_completo,
@@ -120,15 +123,15 @@ class EfetivoController {
 					id_unidade,
 					qrcode_efetivo,
 					email,
-					cnh: cnh != 0 ? cnh : null ,
+					cnh: cnh != 0 ? cnh : null,
 					val_cnh: val_cnh != null ? val_cnh : null,
 					nivel_acesso,
 					ativo_efetivo,
 					sinc_efetivo
-				});	
+				});
 			}
 
-		 
+
 
 			if (foto) {
 				await Foto.create({
@@ -283,7 +286,7 @@ class EfetivoController {
 
 			if (entity) {
 				const entityJson = entity.toJSON();
-				
+
 				if (entityJson.Fotos && entityJson.Fotos.length > 0) {
 					entityJson.foto = entityJson.Fotos[0].foto;
 				} else {

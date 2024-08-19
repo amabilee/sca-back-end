@@ -13,7 +13,7 @@ const usuarioSeed = async () => {
       nivel_acesso: 2,
       modulos: [
         '/relatorio-efetivos',
-        '/relatorio-veiculo',
+        '/relatorio-veiculos',
         '/postos',
         '/unidades',
         '/usuarios',
@@ -31,7 +31,7 @@ const usuarioSeed = async () => {
       nivel_acesso: 1,
       modulos: [
         '/relatorio-efetivos',
-        '/relatorio-veiculo',
+        '/relatorio-veiculos',
         '/efetivos',
         '/veiculos',
         '/crachas',
