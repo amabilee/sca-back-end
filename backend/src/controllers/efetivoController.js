@@ -86,7 +86,7 @@ class EfetivoController {
 		try {
 			const existingEntity = await Entity.findOne({ where: { qrcode_efetivo: qrcode_efetivo } });
 			if (existingEntity) {
-				if (existingEntity.dataValues.ativo_efetivo) {
+				if (!existingEntity.dataValues.ativo_efetivo) {
 					return res.status(400).send({ message: 'Efetivo desativado, entre em contato com os desenvolvedores.' });
 				} else {
 					return res.status(400).send({ message: 'Efetivo já cadastrado com este QR code.' });
@@ -310,7 +310,8 @@ class EfetivoController {
 					sinc_efetivo: entityJson.sinc_efetivo,
 					id_alerta: entityJson.id_alerta,
 					id_unidade: entityJson.id_unidade,
-					id_graduacao: entityJson.id_graduacao
+					id_graduacao: entityJson.id_graduacao,
+					graduacao: entityJson.Graduacao.sigla
 				};
 
 				return res.status(200).json(formattedEntity); // Return the formatted entity
