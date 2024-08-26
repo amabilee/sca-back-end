@@ -380,7 +380,11 @@ class RegistroAcessoController {
 		} catch (error) {
 			console.log(error)
 			if (error.name == 'SequelizeUniqueConstraintError') {
-				res.status(400).send({ message: 'Valores já cadastrados!' });
+				if (error.errors[0].message == 'PRIMARY must be unique'){
+					res.status(400).send({ message: 'Este crachá está associado à outro tipo de entidade' });	
+				} else {
+					res.status(400).send({ message: 'Valores já cadastrados!' });
+				}
 			} else {
 				res.status(500).send({ message: `${error.message}` });
 			}
