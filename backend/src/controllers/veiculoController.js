@@ -1,6 +1,6 @@
 import Entity from '../models/Veiculo.js';
 import QRCode from '../models/QRCode.js';
-import { BOOLEAN, Op, where } from 'sequelize';
+import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize';
 
 import { Efetivo, Graduacao } from '../models/associations.js';
@@ -222,9 +222,10 @@ class VeiculoController {
 
 
 	static updateEntity = async (req, res) => {
+		let qrCode;
 		try {
 			const { id } = req.params;
-			const {
+			let {
 				id_efetivo,
 				tipo,
 				cor_veiculo,
@@ -236,6 +237,12 @@ class VeiculoController {
 				ativo_veiculo,
 				sinc_veiculo
 			} = req.body;
+
+			const existingQrcode = await QRCode.findOne({ where: { qrcode: qrcode } });
+			if (!existingQrcode) {
+				const newQrCode = await QRCode.create({ qrcode: qrcode, nivel_acesso: 1 });
+				qrcode = newQrCode.qrcode;
+			}
 
 			const [updatedRows] = await Entity.update(
 				{
@@ -253,6 +260,7 @@ class VeiculoController {
 				{ where: { id } }
 			);
 
+
 			if (updatedRows > 0) {
 				res.status(200).send({ message: 'Veiculo updated successfully' });
 			} else {
@@ -261,6 +269,9 @@ class VeiculoController {
 				});
 			}
 		} catch (error) {
+			if (qrCode) {
+				await qrCode.destroy();
+			}
 			res.status(500).send({ message: `${error.message}` });
 		}
 	};
