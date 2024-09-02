@@ -20,21 +20,24 @@ const Visitante = db.define(
 		},
 		rua: {
 			type: DataTypes.STRING(30),
-			allowNull: false
+			allowNull: true,
+			defaultValue: null
 		},
 		numero: {
 			type: DataTypes.STRING(10),
-			allowNull: false
+			allowNull: true,
+			defaultValue: null
 		},
 		bairro: {
 			type: DataTypes.STRING(40),
-			allowNull: false
+			allowNull: true,
+			defaultValue: null
 		},
 		estado: {
 			type: DataTypes.STRING(20),
-			allowNull: false
+			allowNull: true,
+			defaultValue: null
 		},
-
 		complemento: {
 			type: DataTypes.STRING(100),
 			allowNull: true,
@@ -42,8 +45,7 @@ const Visitante = db.define(
 		},
 		telefone: {
 			type: DataTypes.STRING(11),
-			allowNull: true,
-			defaultValue: null
+			allowNull: false,
 		},
 		foto: {
 			type: DataTypes.BLOB('long'),
@@ -52,8 +54,7 @@ const Visitante = db.define(
 		},
 		empresa: {
 			type: DataTypes.STRING(45),
-			allowNull: true,
-			defaultValue: null
+			allowNull: false,
 		},
 		cracha: {
 			type: DataTypes.INTEGER,
