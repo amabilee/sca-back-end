@@ -295,7 +295,6 @@ class EfetivoController {
 
 				delete entityJson.Fotos;
 
-				// Format the entity
 				const formattedEntity = {
 					id: entityJson.id,
 					foto: entityJson.foto,
@@ -314,7 +313,7 @@ class EfetivoController {
 					graduacao: entityJson.Graduacao.sigla
 				};
 
-				return res.status(200).json(formattedEntity); // Return the formatted entity
+				return res.status(200).json(formattedEntity);
 			} else {
 				return res.status(404).send({
 					message: `Entity with id ${req.params.id} not found!`
@@ -365,16 +364,13 @@ class EfetivoController {
 					return res.status(404).send({ message: `Entity with id ${entityId} not found!` });
 				}
 
-				// Verificar se a foto foi alterada
 				if (fotoBuffer) {
 					const existingFoto = await Foto.findOne({ where: { id_efetivo: entityId, foto: fotoBuffer } });
 
 					if (!existingFoto) {
-						// Remover a foto antiga se existir
 						if (entity.Fotos && entity.Fotos.length > 0) {
 							await Foto.destroy({ where: { id_efetivo: entityId } });
 						}
-						// Adicionar a nova foto
 						await Foto.create({ id_efetivo: entityId, foto: fotoBuffer });
 					}
 				}
@@ -389,8 +385,8 @@ class EfetivoController {
 						id_unidade,
 						qrcode_efetivo,
 						email,
-						cnh,
-						val_cnh,
+						cnh: cnh === '' ? null : cnh,
+						val_cnh: val_cnh === '' ? null : val_cnh,
 						nivel_acesso,
 						ativo_efetivo,
 						sinc_efetivo

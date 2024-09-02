@@ -12,7 +12,7 @@ import RegistroAcesso from './Registro_Acesso.js';
 import Visitante from './Visitante.js';
 import Cracha from './Cracha.js';
 import VeiculoSemAn from './VeiculoSemAn.js';
-import Qrcode from './Qrcode.js';
+import Qrcode from './QRCode.js';
 import Posto from './Posto.js';
 
 
@@ -57,6 +57,11 @@ RegistroAcesso.belongsTo(Visitante, { foreignKey: 'id_visitante' });
 RegistroAcesso.belongsTo(Dependente, { foreignKey: 'id_dependente' });
 RegistroAcesso.belongsTo(Veiculo, { foreignKey: 'id_veiculo' });
 RegistroAcesso.belongsTo(VeiculoSemAn, { foreignKey: 'id_veiculo_sem_an' });
+
+// Cracha
+Cracha.hasMany(RegistroAcesso, { foreignKey: 'cracha_pessoa', as: 'UltimoRegistroAcessoPessoa' });
+Cracha.hasMany(RegistroAcesso, { foreignKey: 'cracha_veiculo', as: 'UltimoRegistroAcessoVeiculo' });
+
 
 export {
   Usuario,

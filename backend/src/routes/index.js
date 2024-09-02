@@ -15,6 +15,7 @@ import alerta from './alertaRoutes.js';
 import modulo from './moduloRoutes.js';
 import veiculosSemAn from './veiculoSemAnRoutes.js';
 import gerencia from './gerenciaRoute.js';
+import cracha from './crachaRoutes.js';
 
 const routes = (app) => {
 	const swaggerUiOptions = {
@@ -39,6 +40,8 @@ const routes = (app) => {
 	app.use('/', modulo);
 	app.use('/', veiculosSemAn);
 	app.use('/', gerencia);
+	app.use('/', cracha);
+
 };
 
 export default routes;
