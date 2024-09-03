@@ -17,7 +17,6 @@ class CrachaController {
                 whereCondition.ativo_cracha = { [Op.like]: true };
             }
 
-
             if (numero) {
                 whereCondition.numero_cracha = { [Op.like]: `%${numero}%` };
             }
@@ -31,11 +30,10 @@ class CrachaController {
                 whereCondition.veiculo = { [Op.like]: true };
             }
 
-            console.log(whereCondition)
 
             includeConditions.push({
                 model: RegistroAcesso,
-                attributes: ['autorizador', 'data', 'hora', 'detalhe', 'qrcode', 'id_veiculo', 'id_veiculo_sem_an', 'id_visitante', 'id_dependente'],
+                attributes: ['autorizador', 'data', 'hora', 'detalhe', 'qrcode', 'id_veiculo', 'id_veiculo_sem_an', 'id_visitante', 'id_dependente', 'id_posto', 'sentinela'],
                 as: 'UltimoRegistroAcessoPessoa',
                 required: false,
                 include: [
@@ -82,7 +80,7 @@ class CrachaController {
 
             includeConditions.push({
                 model: RegistroAcesso,
-                attributes: ['autorizador', 'data', 'hora', 'detalhe', 'qrcode', 'id_veiculo', 'id_veiculo_sem_an', 'id_visitante', 'id_dependente'],
+                attributes: ['autorizador', 'data', 'hora', 'detalhe', 'qrcode', 'id_veiculo', 'id_veiculo_sem_an', 'id_visitante', 'id_dependente', 'id_posto', 'sentinela'],
                 as: 'UltimoRegistroAcessoVeiculo',
                 required: false,
                 include: [
@@ -140,7 +138,7 @@ class CrachaController {
             const totalPages = Math.ceil(count / limit);
 
             const pagination = {
-                path: '/unidade',
+                path: '/cracha',
                 page,
                 prev_page: page - 1 >= 1 ? page - 1 : false,
                 next_page: Number(page) + Number(1) > totalPages ? false : Number(page) + Number(1),
@@ -179,22 +177,21 @@ class CrachaController {
     static updateEntity = async (req, res) => {
         try {
             const { id } = req.params;
-            const { nome, ativo_unidade, sinc } = req.body;
+            const { ativo_cracha, sinc } = req.body;
 
             const [updatedRows] = await Entity.update(
                 {
-                    nome,
-                    ativo_unidade,
+                    ativo_cracha,
                     sinc
                 },
-                { where: { id } }
+                { where: { numero_cracha: id } }
             );
 
             if (updatedRows > 0) {
                 res.status(200).send({ message: 'Entity updated successfully' });
             } else {
                 res.status(400).send({
-                    message: `Unidade ${id} not found!`
+                    message: `Cracha ${id} not found!`
                 });
             }
         } catch (error) {
@@ -225,7 +222,7 @@ class CrachaController {
                 return res.status(204).send();
             } else {
                 return res.status(400).send({
-                    message: `Unidade ${req.params.id} not found!`
+                    message: `Cracha ${req.params.id} not found!`
                 });
             }
         } catch (error) {

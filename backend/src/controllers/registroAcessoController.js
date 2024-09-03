@@ -123,10 +123,10 @@ class RegistroAcessoController {
 
 		if (data) {
 			const [startDateTime, endDateTime] = data.split(',');
-			
+
 			var startDateTimeCombined = startDateTime.replace('%20', ' ');
 			var endDateTimeCombined = endDateTime.replace('%20', ' ');
-		
+
 			whereCondition = {
 				...whereCondition,
 				[Op.and]: [
@@ -145,9 +145,9 @@ class RegistroAcessoController {
 					}
 				]
 			};
-		
+
 		}
-		
+
 
 		if (tipo) {
 			whereCondition = {
@@ -251,6 +251,8 @@ class RegistroAcessoController {
 	static createEntity = async (req, res) => {
 		try {
 			const {
+
+				//Entrada
 				tipo,
 				data,
 				hora,
@@ -272,104 +274,120 @@ class RegistroAcessoController {
 				sentinela,
 				sinc_acesso,
 				device,
-				detalhe
+				detalhe,
+
+				//Saída
+				id_posto,
+				cracha_pessoa,
+				cracha_veiculo,
+				id_visitante,
+				id_dependente,
+				id_veiculo_sem_an,
 			} = req.body;
 
-			let id_postoCollected
-			const postoInfo = await Posto.findOne({ where: { nivel_acesso: posto } })
-			if (postoInfo) {
-				id_postoCollected = postoInfo.dataValues.id
-			} else {
-				return res.status(400).send({ message: 'Não foi encontrado um posto com este nível de acesso!' });
-			}
-
-			let id_dependenteCollected
-			if (cpf_dependente) {
-				const dependenteInfo = await Dependente.findOne({ where: { cpf: cpf_dependente } })
-				if (dependenteInfo) {
-					id_dependenteCollected = dependenteInfo.dataValues.id
-				} else {
-					return res.status(400).send({ message: 'Não foi encontrado um dependente com este CPF!' });
-				}
-			}
-
-			let id_visitanteCollected
-			if (cpf_visitante) {
-				const visitanteInfo = await Visitante.findOne({ where: { cpf: cpf_visitante } })
-				if (visitanteInfo) {
-					id_visitanteCollected = visitanteInfo.dataValues.id
-				} else {
-					return res.status(400).send({ message: 'Não foi encontrado um visitante com este CPF!' });
-				}
-			}
-
-			let id_veiculo_sem_anCollected
-			if (placa_veiculo_sem_an) {
-
-				const veiculoSemAnInfo = await VeiculoSemAn.findOne({ where: { placa: placa_veiculo_sem_an } })
-				if (veiculoSemAnInfo) {
-					id_veiculo_sem_anCollected = veiculoSemAnInfo.dataValues.id
-				} else {
-					return res.status(400).send({ message: 'Não foi encontrado um veículo sem An com esta placa!' });
-				}
-
-				const cracha_veiculoInfo = await Cracha.findOne({ where: { numero_cracha: cracha_veiculo_numero, veiculo: 1 } })
-				if (!cracha_veiculoInfo) {
-					await Cracha.create({
-						numero_cracha: Number(cracha_veiculo_numero),
-						pessoa: 0,
-						veiculo: 1
-					})
-				}
-			}
-
-			if (cpf_dependente || cpf_visitante || cracha_pessoa_numero) {
-				const cracha_pessoaInfo = await Cracha.findOne({ where: { numero_cracha: cracha_pessoa_numero, pessoa: 1 } })
-				if (!cracha_pessoaInfo) {
-					await Cracha.create({
-						numero_cracha: Number(cracha_pessoa_numero),
-						pessoa: 1,
-						veiculo: 0
-					})
-				}
-			}
-
 			let autorizadorSearch;
-			if (qrcode_autorizador) {
-				const autorizadorInfo = await Efetivo.findOne({
-					where: { qrcode_efetivo: qrcode_autorizador },
-				});
+			let id_postoCollected;
+			let id_dependenteCollected;
+			let id_visitanteCollected;
+			let id_veiculo_sem_anCollected;
 
-				if (autorizadorInfo) {
-					let graduacaoId = autorizadorInfo.dataValues.id_graduacao;
-					let graduacaoFromAutorizador = await Graduacao.findOne({
-						where: { id: graduacaoId },
-					});
-					if (graduacaoFromAutorizador) {
-						autorizadorSearch = `${graduacaoFromAutorizador.dataValues.sigla} ${autorizadorInfo.dataValues.nome_guerra}`;
-					} else {
-						return res.status(400).send({ message: "Graduação não encontrada para o autorizador." });
-					}
+			if (!id_posto) {
+				
+				const postoInfo = await Posto.findOne({ where: { nivel_acesso: posto } })
+				if (postoInfo) {
+					id_postoCollected = postoInfo.dataValues.id
 				} else {
-					return res.status(400).send({ message: "Não foi encontrado um visitante com este CPF!" });
+					return res.status(400).send({ message: 'Não foi encontrado um posto com este nível de acesso!' });
+				}
+
+				if (cpf_dependente) {
+					const dependenteInfo = await Dependente.findOne({ where: { cpf: cpf_dependente } })
+					if (dependenteInfo) {
+						id_dependenteCollected = dependenteInfo.dataValues.id
+					} else {
+						return res.status(400).send({ message: 'Não foi encontrado um dependente com este CPF!' });
+					}
+				}
+
+				if (cpf_visitante) {
+					const visitanteInfo = await Visitante.findOne({ where: { cpf: cpf_visitante } })
+					if (visitanteInfo) {
+						id_visitanteCollected = visitanteInfo.dataValues.id
+					} else {
+						return res.status(400).send({ message: 'Não foi encontrado um visitante com este CPF!' });
+					}
+				}
+
+				if (placa_veiculo_sem_an) {
+
+					const veiculoSemAnInfo = await VeiculoSemAn.findOne({ where: { placa: placa_veiculo_sem_an } })
+					if (veiculoSemAnInfo) {
+						id_veiculo_sem_anCollected = veiculoSemAnInfo.dataValues.id
+					} else {
+						return res.status(400).send({ message: 'Não foi encontrado um veículo sem An com esta placa!' });
+					}
+
+					const cracha_veiculoInfo = await Cracha.findOne({ where: { numero_cracha: cracha_veiculo_numero, veiculo: 1 } })
+					if (!cracha_veiculoInfo) {
+						await Cracha.create({
+							numero_cracha: Number(cracha_veiculo_numero),
+							pessoa: 0,
+							veiculo: 1
+						})
+					}
+				}
+
+				if (cpf_dependente || cpf_visitante || cracha_pessoa_numero) {
+					const cracha_pessoaInfo = await Cracha.findOne({ where: { numero_cracha: cracha_pessoa_numero, pessoa: 1 } })
+					if (!cracha_pessoaInfo) {
+						await Cracha.create({
+							numero_cracha: Number(cracha_pessoa_numero),
+							pessoa: 1,
+							veiculo: 0
+						})
+					}
+				}
+
+				if (qrcode_autorizador) {
+					const autorizadorInfo = await Efetivo.findOne({
+						where: { qrcode_efetivo: qrcode_autorizador },
+					});
+
+					if (autorizadorInfo) {
+						let graduacaoId = autorizadorInfo.dataValues.id_graduacao;
+						let graduacaoFromAutorizador = await Graduacao.findOne({
+							where: { id: graduacaoId },
+						});
+						if (graduacaoFromAutorizador) {
+							autorizadorSearch = `${graduacaoFromAutorizador.dataValues.sigla} ${autorizadorInfo.dataValues.nome_guerra}`;
+						} else {
+							return res.status(400).send({ message: "Graduação não encontrada para o autorizador." });
+						}
+					} else {
+						return res.status(400).send({ message: "Não foi encontrado um visitante com este CPF!" });
+					}
 				}
 			}
+
+
 
 
 			const createdEntity = await Entity.create({
 				tipo,
 				data,
 				hora,
-				id_posto: id_postoCollected,
+				id_posto: id_posto != null ? id_posto : id_postoCollected,
 
 				qrcode,
-				cracha_pessoa: cracha_pessoa_numero ? cracha_pessoa_numero : null,
-				cracha_veiculo: cracha_veiculo_numero ? cracha_veiculo_numero : null,
-				id_visitante: id_visitanteCollected ? id_visitanteCollected : null,
-				id_dependente: id_dependenteCollected ? id_dependenteCollected : null,
+				cracha_pessoa: cracha_pessoa != null ? cracha_pessoa :
+					cracha_pessoa_numero ? cracha_pessoa_numero :
+						null,
+				cracha_veiculo: cracha_veiculo != null ? cracha_veiculo : cracha_veiculo_numero ? cracha_veiculo_numero : null,
+				id_visitante: id_visitante != null ? id_visitante : id_visitanteCollected ? id_visitanteCollected : null,
+				id_dependente: id_dependente != null ? id_dependente : id_dependenteCollected ? id_dependenteCollected : null,
 				id_veiculo,
-				id_veiculo_sem_an: id_veiculo_sem_anCollected ? id_veiculo_sem_anCollected : null,
-				autorizador: qrcode_autorizador ? autorizadorSearch : autorizador ? autorizador : null,
+				id_veiculo_sem_an: id_veiculo_sem_an != null ? id_veiculo_sem_an : id_veiculo_sem_anCollected ? id_veiculo_sem_anCollected : null,
+				autorizador: autorizador != null ? autorizador : qrcode_autorizador ? autorizadorSearch : autorizador ? autorizador : null,
 				sentinela,
 
 				sinc_acesso,
@@ -380,8 +398,8 @@ class RegistroAcessoController {
 		} catch (error) {
 			console.log(error)
 			if (error.name == 'SequelizeUniqueConstraintError') {
-				if (error.errors[0].message == 'PRIMARY must be unique'){
-					res.status(400).send({ message: 'Este crachá está associado à outro tipo de entidade' });	
+				if (error.errors[0].message == 'PRIMARY must be unique') {
+					res.status(400).send({ message: 'Este crachá está associado à outro tipo de entidade' });
 				} else {
 					res.status(400).send({ message: 'Valores já cadastrados!' });
 				}

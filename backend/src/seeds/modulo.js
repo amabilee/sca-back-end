@@ -3,7 +3,7 @@ import Modulo from '../models/Modulo.js';
 const moduloSeed = async () => {
     const modulosData = [
         { descricao: "Usuários", link: "/usuarios", icone: "usuario_icon.svg", ordem: 1 },
-        { descricao: "Efetivos", link: "/efetivos", icone: "efetivo_icon.svg", ordem: 2 },
+        { descricao: "Efetivo", link: "/efetivos", icone: "efetivo_icon.svg", ordem: 2 },
         { descricao: "Relatórios Efetivos", link: "/relatorio-efetivos", icone: "reports_efetivo_icon.svg", ordem: 3 },
         { descricao: "Relatórios Veículos", link: "/relatorio-veiculos", icone: "reports_veiculo_icon.svg", ordem: 4 },
         { descricao: "Alertas", link: "/alertas", icone: "alertas_icon.svg", ordem: 5 },

@@ -27,7 +27,12 @@ const Cracha = db.define (
             type: DataTypes.BIGINT,
             allowNull: false,
             defaultValue: 1
-        }
+        },
+        ativo_cracha: {
+            type: DataTypes.TINYINT,
+            allowNull: false,
+            defaultValue: 1
+        },
     }, {
         tableName: 'cracha',
         timestamps: false
