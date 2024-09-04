@@ -332,8 +332,16 @@ class RegistroAcessoController {
 						await Cracha.create({
 							numero_cracha: Number(cracha_veiculo_numero),
 							pessoa: 0,
-							veiculo: 1
+							veiculo: 1,
+							ativo_cracha: 1
 						})
+					} else {
+						await Cracha.update(
+							{
+								ativo_cracha: 1
+							},
+							{ where: { numero_cracha: cracha_veiculo_numero } }
+						);
 					}
 				}
 
@@ -343,8 +351,16 @@ class RegistroAcessoController {
 						await Cracha.create({
 							numero_cracha: Number(cracha_pessoa_numero),
 							pessoa: 1,
-							veiculo: 0
+							veiculo: 0,
+							ativo_cracha: 1
 						})
+					} else {
+						await Cracha.update(
+							{
+								ativo_cracha: 1
+							},
+							{ where: { numero_cracha: cracha_pessoa_numero } }
+						);
 					}
 				}
 

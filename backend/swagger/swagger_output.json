@@ -1132,6 +1132,24 @@
                 },
                 "detalhe": {
                   "example": "any"
+                },
+                "id_posto": {
+                  "example": "any"
+                },
+                "cracha_pessoa": {
+                  "example": "any"
+                },
+                "cracha_veiculo": {
+                  "example": "any"
+                },
+                "id_visitante": {
+                  "example": "any"
+                },
+                "id_dependente": {
+                  "example": "any"
+                },
+                "id_veiculo_sem_an": {
+                  "example": "any"
                 }
               }
             }
