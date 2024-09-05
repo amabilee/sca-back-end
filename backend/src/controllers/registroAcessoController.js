@@ -212,7 +212,7 @@ class RegistroAcessoController {
 			const { count, rows: entities } = await Entity.findAndCountAll({
 				where: whereCondition,
 				include: includeConditions,
-				order: [['id', 'ASC']],
+				order: [['id', 'DESC']],
 				offset: Number(page * limit - limit),
 				limit: limit
 			});
@@ -292,7 +292,7 @@ class RegistroAcessoController {
 			let id_veiculo_sem_anCollected;
 
 			if (!id_posto) {
-				
+
 				const postoInfo = await Posto.findOne({ where: { nivel_acesso: posto } })
 				if (postoInfo) {
 					id_postoCollected = postoInfo.dataValues.id
@@ -336,12 +336,16 @@ class RegistroAcessoController {
 							ativo_cracha: 1
 						})
 					} else {
-						await Cracha.update(
-							{
-								ativo_cracha: 1
-							},
-							{ where: { numero_cracha: cracha_veiculo_numero } }
-						);
+						if (cracha_veiculoInfo.dataValues.ativo_cracha == 0){
+							await Cracha.update(
+								{
+									ativo_cracha: 1
+								},
+								{ where: { numero_cracha: cracha_veiculo_numero } }
+							);
+						} else {
+							return res.status(400).send({ message: "Este crachá já esta sendo utilizado por um veículo!" });
+						}
 					}
 				}
 
@@ -355,12 +359,16 @@ class RegistroAcessoController {
 							ativo_cracha: 1
 						})
 					} else {
-						await Cracha.update(
-							{
-								ativo_cracha: 1
-							},
-							{ where: { numero_cracha: cracha_pessoa_numero } }
-						);
+						if (cracha_pessoaInfo.dataValues.ativo_cracha == 0) {
+							await Cracha.update(
+								{
+									ativo_cracha: 1
+								},
+								{ where: { numero_cracha: cracha_pessoa_numero } }
+							);
+						} else {
+							return res.status(400).send({ message: "Este crachá já esta sendo utilizado por uma pessoa!" });
+						}
 					}
 				}
 

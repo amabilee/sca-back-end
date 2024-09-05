@@ -1,11 +1,11 @@
-import { Op, where } from 'sequelize';
+import { Op } from 'sequelize';
 import Entity from '../models/Cracha.js';
 import { RegistroAcesso, Cracha, Qrcode, Efetivo, Graduacao, Veiculo, VeiculoSemAn, Dependente, Visitante, Unidade } from '../models/associations.js'
 
 class CrachaController {
     static getAllEntities = async (req, res) => {
         const { page, ativo, numero, tipo } = req.query;
-        const limit = 15;
+        const limit = 200;
         let whereCondition = {};
         let includeConditions = [];
 
@@ -130,7 +130,7 @@ class CrachaController {
             const { count, rows: entities } = await Cracha.findAndCountAll({
                 where: whereCondition,
                 include: includeConditions,
-                order: [['numero_cracha', 'ASC']],
+                order: [['numero_cracha', 'DESC']],
                 limit,
                 offset
             });
