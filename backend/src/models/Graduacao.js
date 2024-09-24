@@ -15,7 +15,7 @@ const Graduacao = db.define(
 			allowNull: false
 		},
 		descricao: {
-			type: DataTypes.STRING(15),
+			type: DataTypes.STRING(60),
 			allowNull: false
 		},
 		ordem: {
